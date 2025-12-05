@@ -1,0 +1,23 @@
+{
+  "name": "Retigráfico de Roçada",
+  "short_name": "Retigráfico",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "image_1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "image_2.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
