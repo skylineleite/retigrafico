@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>Retigráfico - Coleta</title>
 
-  <link rel="manifest" href="manifest.webmanifest?v=2">
+  <link rel="manifest" href="manifest.webmanifest?v=3">
   <meta name="theme-color" content="#f8fafc">
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -13,9 +13,9 @@
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
   <style>
-    /* ... (ESTILOS MANTIDOS IGUAIS AO ANTERIOR) ... */
     :root{
       --ok:#8BC34A; --mid:#FFEB3B; --bad:#F44336;
+      --worse:#9C27B0; --dead:#212121; /* Novas Cores */
       --ink:#020617; --muted:#64748b; --brand:#0ea5e9;
       --bg:#f8fafc; --card:#ffffff;
       --radius:16px; --kmA:#f5fbff; --kmB:#ffffff;
@@ -48,9 +48,9 @@
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
     
-    input,button{ padding:12px; border-radius:12px; border:1px solid #cbd5e1; font-size:16px; outline:none; }
-    input:focus{ border-color:var(--brand); }
-    input[type=number],input[type=text]{ background:#fff; width:100%; }
+    input,button,select{ padding:12px; border-radius:12px; border:1px solid #cbd5e1; font-size:16px; outline:none; }
+    input:focus, select:focus{ border-color:var(--brand); }
+    input[type=number],input[type=text],select{ background:#fff; width:100%; }
     
     button{ background:var(--brand); color:#fff; border:none; cursor:pointer; font-weight:600; }
     button.ghost{ background:#fff; color:var(--brand); border:1px solid var(--brand); }
@@ -74,14 +74,18 @@
     th{ background:#f1f5f9; font-size:12px; text-transform:uppercase; color:#475569; position:sticky; top:0; z-index:2; }
     
     .chip{
-      padding:8px 12px; border-radius:99px; border:1px solid #cbd5e1; background:#f1f5f9;
-      color:#334155; font-size:13px; font-weight:700; cursor:pointer; display:inline-flex;
-      align-items:center; justify-content:center; min-width:36px; transition:all 0.1s;
+      padding:8px 8px; border-radius:99px; border:1px solid #cbd5e1; background:#f1f5f9;
+      color:#334155; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex;
+      align-items:center; justify-content:center; min-width:32px; transition:all 0.1s;
     }
-    .chip.active { transform:scale(1.05); border-width:2px; }
+    .chip.active { transform:scale(1.1); border-width:2px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    
+    /* CORES DOS CHIPS */
     .chip.ok.active { background:var(--ok); border-color:#558b2f; color:#fff; }
     .chip.mid.active { background:var(--mid); border-color:#fbc02d; color:#000; }
     .chip.bad.active { background:var(--bad); border-color:#c62828; color:#fff; }
+    .chip.worse.active { background:var(--worse); border-color:#7B1FA2; color:#fff; }
+    .chip.dead.active { background:var(--dead); border-color:#000; color:#fff; }
 
     .photo-thumb{ width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer; }
     .photo-grid{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
@@ -94,7 +98,6 @@
     .stat-card{ flex:1 1 140px; background:#f8fafc; border-radius:12px; padding:12px; border:1px solid #e2e8f0; }
     .bar-wrap{ height:8px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin-top:6px; }
     .bar-inner{ height:100%; }
-    .bar-ok{background:var(--ok)} .bar-mid{background:var(--mid)} .bar-bad{background:var(--bad)}
 
     .icon-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .icon-wa { width: 18px; height: 18px; fill: currentColor; }
@@ -122,6 +125,16 @@
         <div><label>KM Inicial</label><input id="kmStart" type="number" placeholder="Ex.: 256"></div>
         <div><label>KM Final</label><input id="kmEnd" type="number" placeholder="Ex.: 260"></div>
       </div>
+      
+      <div style="margin-top:16px">
+        <label>Modelo de Avaliação</label>
+        <select id="modelSelect">
+          <option value="padrao">Roçada Padrão (1 a 3)</option>
+          <option value="detalhado">Roçada Detalhada (1 a 5)</option>
+          <option value="drenagem">Drenagem (Limpa/Suja/Obstruída)</option>
+        </select>
+      </div>
+
       <div style="margin-top:16px">
         <label>Sentido / Pista</label>
         <div id="sentidosBox" class="row" style="margin-top:8px; gap:12px"></div>
@@ -135,12 +148,12 @@
     <div class="card">
       <div class="card-title" style="font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between">
         <span>2. Coleta de Campo</span>
-        <button id="btnTudoBom" class="ghost" style="font-size:12px;padding:6px 10px">Tudo Bom (1)</button>
+        <button id="btnTudoBom" class="ghost" style="font-size:12px;padding:6px 10px">Tudo 1 (Bom/Limpa)</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>KM</th><th>Seção</th><th style="min-width:160px">Condição</th><th>Fotos</th><th>Obs</th></tr>
+            <tr><th>KM</th><th>Seção</th><th style="min-width:180px">Condição</th><th>Fotos</th><th>Obs</th></tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -172,63 +185,81 @@
       <div style="margin-top:10px"><button onclick="document.getElementById('photoModal').classList.add('hidden')" style="background:#fff;color:#000;border-radius:20px">Fechar</button></div>
     </div>
   </div>
-
   <div id="saveModal" class="modal-back hidden">
     <div class="modal-card">
-      <h3>Salvar Retigráfico</h3>
-      <p style="color:var(--muted);font-size:14px">Defina um nome para salvar no app.</p>
+      <h3>Salvar</h3>
       <input id="saveFileName" type="text" style="width:100%;margin-bottom:16px">
-      <div class="icon-btn">
-        <button id="btnConfirmSave" style="flex:1">Salvar</button>
-        <button onclick="document.getElementById('saveModal').classList.add('hidden')" class="ghost">Cancelar</button>
-      </div>
+      <div class="icon-btn"><button id="btnConfirmSave" style="flex:1">Salvar</button><button onclick="document.getElementById('saveModal').classList.add('hidden')" class="ghost">Cancelar</button></div>
     </div>
   </div>
-
   <div id="changeModal" class="modal-back hidden">
     <div class="modal-card">
-      <h3>Alterar Arquivo?</h3>
-      <p style="color:var(--muted);font-size:14px">Este é um arquivo salvo. Deseja alterar?</p>
-      <div class="icon-btn">
-        <button id="btnAllowEdit" style="flex:1">Sim, alterar</button>
-        <button onclick="document.getElementById('changeModal').classList.add('hidden')" class="ghost">Não</button>
-      </div>
+      <h3>Alterar?</h3>
+      <p style="color:var(--muted)">Arquivo protegido.</p>
+      <div class="icon-btn"><button id="btnAllowEdit" style="flex:1">Alterar</button><button onclick="document.getElementById('changeModal').classList.add('hidden')" class="ghost">Não</button></div>
     </div>
   </div>
-
   <div id="resetModal" class="modal-back hidden">
     <div class="modal-card">
-      <h3>⚠️ Limpar Tudo</h3>
-      <p style="color:var(--muted);font-size:14px">Apagar os dados da tela?</p>
+      <h3>⚠️ Limpar</h3>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button id="btnSafetyExport">Baixar XLSX (Recomendado)</button>
+        <button id="btnSafetyExport">Baixar XLSX</button>
         <button id="btnConfirmReset" class="danger">Apagar Tudo</button>
         <button onclick="document.getElementById('resetModal').classList.add('hidden')" class="ghost">Cancelar</button>
       </div>
     </div>
   </div>
-
   <div id="exitModal" class="modal-back hidden">
     <div class="modal-card">
-      <h3>Sair sem salvar?</h3>
-      <p style="color:var(--muted);font-size:14px">Há alterações não salvas.</p>
+      <h3>Sair?</h3>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button id="btnExitSave">Salvar alterações</button>
-        <button id="btnExitNoSave" class="danger">Sair sem salvar</button>
+        <button id="btnExitSave">Salvar</button>
+        <button id="btnExitNoSave" class="danger">Não Salvar</button>
         <button onclick="document.getElementById('exitModal').classList.add('hidden')" class="ghost">Cancelar</button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- LÓGICA DO APP ---
+    // --- DEFINIÇÃO DOS MODELOS ---
+    const MODELS = {
+      'padrao': {
+        name: 'Roçada Padrão (1-3)',
+        opts: [
+          {v:1, l:'Bom', c:'ok', color:'#8BC34A'},
+          {v:2, l:'Reg', c:'mid', color:'#FFEB3B'},
+          {v:3, l:'Cri', c:'bad', color:'#F44336'}
+        ]
+      },
+      'detalhado': {
+        name: 'Roçada Detalhada (1-5)',
+        opts: [
+          {v:1, l:'Bom', c:'ok', color:'#8BC34A'},
+          {v:2, l:'Reg', c:'mid', color:'#FFEB3B'},
+          {v:3, l:'Cri', c:'bad', color:'#F44336'},
+          {v:4, l:'Pés', c:'worse', color:'#9C27B0'},
+          {v:5, l:'Int', c:'dead', color:'#212121'}
+        ]
+      },
+      'drenagem': {
+        name: 'Drenagem (1-3)',
+        opts: [
+          {v:1, l:'Limp', c:'ok', color:'#8BC34A'},
+          {v:2, l:'Suja', c:'mid', color:'#FFEB3B'},
+          {v:3, l:'Obs', c:'bad', color:'#F44336'}
+        ]
+      }
+    };
+
     const INDEX_KEY = 'retigrafico_index_v1';
     let currentId = null; 
     let isFileProtected = false;
     let hasUnsavedChanges = false;
     
+    // State agora inclui o 'model'
     let state = {
       kmStart:0, kmEnd:0, rodoviaUF:'', selectedSecoes:[], data:{},
+      model: 'padrao', // Default
       metadata: { created: new Date().toISOString() }
     };
 
@@ -242,13 +273,20 @@
         const raw = localStorage.getItem(id);
         if (raw) {
           state = JSON.parse(raw);
+          // Fallback para arquivos antigos sem model definido
+          if(!state.model) state.model = 'padrao';
+          
           currentId = id;
           isFileProtected = true;
           document.getElementById('fileLabel').innerText = state.metadata.name || 'Arquivo Salvo';
+          
+          // Travar o seletor de modelo se já tiver dados
+          document.getElementById('modelSelect').disabled = true;
         }
       } else if (isNew) {
         currentId = null;
         isFileProtected = false;
+        state.model = 'padrao';
       }
       
       if (action === 'share' && currentId) setTimeout(shareFile, 1000);
@@ -258,11 +296,11 @@
 
     function requestEditAccess(callback) {
       if (isFileProtected) {
-        const modal = document.getElementById('changeModal');
-        modal.classList.remove('hidden');
+        document.getElementById('changeModal').classList.remove('hidden');
         document.getElementById('btnAllowEdit').onclick = () => {
           isFileProtected = false;
-          modal.classList.add('hidden');
+          document.getElementById('modelSelect').disabled = false;
+          document.getElementById('changeModal').classList.add('hidden');
           hasUnsavedChanges = true;
           callback();
         };
@@ -286,12 +324,17 @@
     function getSecoes(){
       return state.selectedSecoes && state.selectedSecoes.length ? state.selectedSecoes : ["Sul","CC","Norte"];
     }
+    
+    function getModelOpts(){
+      return MODELS[state.model || 'padrao'].opts;
+    }
 
     // --- RENDERIZADORES ---
     function renderAll() {
       document.getElementById('rodoviaUF').value = state.rodoviaUF || '';
       document.getElementById('kmStart').value = state.kmStart || '';
       document.getElementById('kmEnd').value = state.kmEnd || '';
+      document.getElementById('modelSelect').value = state.model || 'padrao';
       
       renderSentidosBox();
       renderTable();
@@ -305,31 +348,20 @@
       ["Sul","CC","Norte","Leste","Oeste"].forEach(s => {
         const wrap = document.createElement('label');
         wrap.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border-radius:8px;border:1px solid #e2e8f0';
-        
         const cb = document.createElement('input');
         cb.type = 'checkbox'; cb.value = s;
         if (getSecoes().includes(s)) cb.checked = true;
-        
         cb.onclick = (e) => {
-          if (isFileProtected) {
-             e.preventDefault();
-             requestEditAccess(() => {
-                cb.checked = !cb.checked; 
-                updateSentidos();
-             });
-          } else {
-             setTimeout(updateSentidos, 0);
-          }
+          if (isFileProtected) { e.preventDefault(); requestEditAccess(() => { cb.checked = !cb.checked; updateSentidos(); }); } 
+          else { setTimeout(updateSentidos, 0); }
         };
-        
         wrap.append(cb, s);
         box.appendChild(wrap);
       });
     }
 
     function updateSentidos() {
-      const selected = Array.from(document.querySelectorAll('#sentidosBox input:checked')).map(i=>i.value);
-      state.selectedSecoes = selected;
+      state.selectedSecoes = Array.from(document.querySelectorAll('#sentidosBox input:checked')).map(i=>i.value);
       renderAll();
     }
 
@@ -340,6 +372,7 @@
       
       const kms = range(state.kmStart, state.kmEnd);
       const sentidos = getSecoes();
+      const opts = getModelOpts();
 
       kms.forEach((km, idx) => {
         const bg = idx%2===0 ? 'var(--kmA)' : 'var(--kmB)';
@@ -362,16 +395,18 @@
           tdSec.style.fontSize = '12px';
           tr.appendChild(tdSec);
 
+          // Renderização Dinâmica dos Chips
           const tdSt = document.createElement('td');
           const rowSt = document.createElement('div');
           rowSt.className='row';
-          [1,2,3].forEach(val => {
+          opts.forEach(opt => {
              const chip = document.createElement('div');
-             chip.className = `chip ${val===1?'ok':val===2?'mid':'bad'}`;
-             if(ponto.status === val) chip.classList.add('active');
-             chip.textContent = val;
+             chip.className = `chip ${opt.c}`;
+             if(ponto.status === opt.v) chip.classList.add('active');
+             chip.textContent = opt.v; // Mostra número
+             chip.title = opt.l;       // Mostra label ao passar mouse
              chip.onclick = () => requestEditAccess(() => {
-                ponto.status = (ponto.status === val ? null : val);
+                ponto.status = (ponto.status === opt.v ? null : opt.v);
                 renderAll();
              });
              rowSt.appendChild(chip);
@@ -379,41 +414,28 @@
           tdSt.appendChild(rowSt);
           tr.appendChild(tdSt);
 
+          // Fotos
           const tdF = document.createElement('td');
           const grid = document.createElement('div'); grid.className='photo-grid';
           (ponto.photos||[]).forEach((ph, i) => {
              const img = document.createElement('img');
              img.src = ph.data; img.className = 'photo-thumb';
              img.onclick = () => { document.getElementById('photoModalImg').src = ph.data; document.getElementById('photoModal').classList.remove('hidden'); }
-             img.oncontextmenu = (e) => {
-               e.preventDefault();
-               requestEditAccess(() => {
-                 if(confirm('Apagar foto?')) { ponto.photos.splice(i,1); renderAll(); }
-               });
-             };
+             img.oncontextmenu = (e) => { e.preventDefault(); requestEditAccess(() => { if(confirm('Apagar?')) { ponto.photos.splice(i,1); renderAll(); } }); };
              grid.appendChild(img);
           });
-          
           if((ponto.photos||[]).length < 3) {
-             const add = document.createElement('label');
-             add.className='photo-empty'; add.innerHTML='+';
-             const inp = document.createElement('input');
-             inp.type='file'; inp.accept='image/*'; inp.style.display='none';
+             const add = document.createElement('label'); add.className='photo-empty'; add.innerHTML='+';
+             const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.style.display='none';
              inp.onchange = (e) => requestEditAccess(() => handlePhoto(e, ponto, secao, km));
-             add.onclick = () => inp.click();
-             add.appendChild(inp);
-             grid.appendChild(add);
+             add.onclick = () => inp.click(); add.appendChild(inp); grid.appendChild(add);
           }
-          tdF.appendChild(grid);
-          tr.appendChild(tdF);
+          tdF.appendChild(grid); tr.appendChild(tdF);
 
           const tdObs = document.createElement('td');
-          const ipt = document.createElement('input');
-          ipt.value = ponto.obs||'';
-          ipt.placeholder = '...';
+          const ipt = document.createElement('input'); ipt.value = ponto.obs||''; ipt.placeholder = '...';
           ipt.onchange = () => requestEditAccess(() => { ponto.obs = ipt.value; });
-          tdObs.appendChild(ipt);
-          tr.appendChild(tdObs);
+          tdObs.appendChild(ipt); tr.appendChild(tdObs);
 
           tbody.appendChild(tr);
         });
@@ -424,18 +446,24 @@
       const wrap=document.getElementById('heatWrap'); wrap.innerHTML='';
       if(!state.kmStart && !state.kmEnd) return;
       const kms=range(state.kmStart,state.kmEnd); const sentidos=getSecoes();
+      const opts = getModelOpts();
+      
       const frame=document.createElement('div'); frame.className='heat-grid';
       const hRow=document.createElement('div'); hRow.className='heat-row';
       hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:''}));
       kms.forEach(k=>hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:k,style:'font-weight:bold'})));
       frame.appendChild(hRow);
+      
       sentidos.forEach(s=>{
         const row=document.createElement('div'); row.className='heat-row';
         row.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:s,style:'width:50px;justify-content:flex-start;padding-left:4px'}));
         kms.forEach(k=>{
            ensure(s,k); const v=state.data[s][k].status;
            const c=document.createElement('div'); c.className='heat-cell';
-           c.style.background = v===1?'var(--ok)':v===2?'var(--mid)':v===3?'var(--bad)':'transparent';
+           // Acha a cor no modelo
+           const opt = opts.find(o => o.v === v);
+           c.style.background = opt ? opt.color : 'transparent';
+           if(opt && (opt.c === 'worse' || opt.c === 'dead')) c.style.color = '#fff'; // Texto branco para fundo escuro
            if(v) c.textContent=v;
            row.appendChild(c);
         });
@@ -448,248 +476,187 @@
       const wrap = document.getElementById('statsWrap'); wrap.innerHTML='';
       const kms = range(state.kmStart, state.kmEnd);
       const sentidos = getSecoes();
-      let filled = 0, b=0, m=0, c=0;
+      const opts = getModelOpts();
+      
+      let filled = 0;
+      let counts = {}; 
+      opts.forEach(o => counts[o.v] = 0);
+
       const totalPossible = kms.length * sentidos.length;
       sentidos.forEach(s => kms.forEach(k => {
          const p = state.data[s] && state.data[s][k];
-         if(p && p.status) { filled++; if(p.status===1)b++; else if(p.status===2)m++; else c++; }
+         if(p && p.status) { 
+           filled++; 
+           if(counts[p.status] !== undefined) counts[p.status]++;
+         }
       }));
+      
       const pct = totalPossible ? Math.round((filled/totalPossible)*100) : 0;
       const div = document.createElement('div');
       div.className = 'row'; div.style.marginTop='16px';
-      div.innerHTML = `
+      
+      let html = `
         <div class="stat-card" style="border-color:var(--brand)">
-           <div style="font-size:24px;font-weight:800;color:var(--brand)">${filled} / ${totalPossible}</div>
+           <div style="font-size:20px;font-weight:800;color:var(--brand)">${filled} / ${totalPossible}</div>
            <div class="small">Avaliados</div>
            <div class="bar-wrap"><div class="bar-inner" style="width:${pct}%;background:var(--brand)"></div></div>
-        </div>
-        <div class="stat-card"><div class="stat-value">${b}</div><div class="small">Bom</div><div class="bar-wrap"><div class="bar-ok bar-inner" style="width:${filled?b/filled*100:0}%"></div></div></div>
-        <div class="stat-card"><div class="stat-value">${m}</div><div class="small">Regular</div><div class="bar-wrap"><div class="bar-mid bar-inner" style="width:${filled?m/filled*100:0}%"></div></div></div>
-        <div class="stat-card"><div class="stat-value">${c}</div><div class="small">Crítico</div><div class="bar-wrap"><div class="bar-bad bar-inner" style="width:${filled?c/filled*100:0}%"></div></div></div>
-      `;
+        </div>`;
+      
+      opts.forEach(o => {
+        const cVal = counts[o.v] || 0;
+        const cPct = filled ? (cVal/filled)*100 : 0;
+        html += `
+        <div class="stat-card">
+           <div style="font-size:20px;font-weight:800">${cVal}</div>
+           <div class="small">${o.l}</div>
+           <div class="bar-wrap"><div class="bar-inner" style="width:${cPct}%; background:${o.color}"></div></div>
+        </div>`;
+      });
+      
+      div.innerHTML = html;
       wrap.appendChild(div);
     }
 
-    // --- FUNÇÕES DE EXPORTAÇÃO AVANÇADA (NOVO) ---
-    function generatePieChartImage(b, m, c) {
+    // --- GRÁFICO DINÂMICO PARA EXPORTAÇÃO ---
+    function generatePieChartImage(countsData, opts) {
         const canvas = document.createElement('canvas');
         canvas.width = 400; canvas.height = 300;
         const ctx = canvas.getContext('2d');
-        const data = [b, m, c];
-        const colors = ['#8BC34A', '#FFEB3B', '#F44336'];
-        const total = data.reduce((acc, val) => acc + val, 0) || 1;
+        
+        const total = countsData.reduce((acc, val) => acc + val, 0) || 1;
         let startAngle = -Math.PI / 2;
 
-        // Fundo Branco
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0,0,400,300);
-
-        // Desenha Pizza
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,400,300);
         const centerX = 150; const centerY = 150; const radius = 100;
-        for (let i = 0; i < data.length; i++) {
-            const sliceAngle = (data[i] / total) * 2 * Math.PI;
+
+        // Desenha fatias
+        countsData.forEach((val, i) => {
+            const sliceAngle = (val / total) * 2 * Math.PI;
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
             ctx.closePath();
-            ctx.fillStyle = colors[i];
+            ctx.fillStyle = opts[i].color;
             ctx.fill();
             startAngle += sliceAngle;
-        }
+        });
 
-        // Legenda
-        const labels = ['Bom', 'Regular', 'Crítico'];
+        // Legenda Dinâmica
         ctx.font = "14px Arial";
-        for(let i=0; i<3; i++){
-            ctx.fillStyle = colors[i];
-            ctx.fillRect(280, 120 + (i*30), 15, 15);
+        opts.forEach((o, i) => {
+            ctx.fillStyle = o.color;
+            ctx.fillRect(270, 80 + (i*30), 15, 15);
             ctx.fillStyle = "#000";
-            ctx.fillText(`${labels[i]}: ${Math.round((data[i]/total)*100)}%`, 305, 132 + (i*30));
-        }
+            const val = countsData[i];
+            const p = Math.round((val/total)*100);
+            ctx.fillText(`${o.l}: ${p}%`, 295, 92 + (i*30));
+        });
 
         return canvas.toDataURL('image/png');
     }
 
     async function exportXLSX(){
-      if(!state.kmStart){ alert('Sem dados.'); return; }
-      
+      if(!state.kmStart || !state.kmEnd){ alert('Intervalo indefinido.'); return; }
       const wb = new ExcelJS.Workbook();
       const kms = range(state.kmStart, state.kmEnd);
       const sentidos = getSecoes();
+      const opts = getModelOpts();
+
+      // Contagem para estatísticas
+      let counts = new Array(opts.length).fill(0);
+      let total = 0;
       
-      // CALCULAR TOTAIS
-      let b=0, m=0, c=0, total=0;
       sentidos.forEach(s => kms.forEach(k => {
          const p = state.data[s]?.[k];
-         if(p && p.status){ total++; if(p.status===1)b++; else if(p.status===2)m++; else c++; }
+         if(p && p.status){
+             total++;
+             // Achar indice no opts
+             const idx = opts.findIndex(o => o.v === p.status);
+             if(idx >= 0) counts[idx]++;
+         }
       }));
 
-      // ==========================================
-      // ABA 1: RETIGRAFICO (O Painel Visual)
-      // ==========================================
+      // ABA 1: VISUAL
       const wsRet = wb.addWorksheet('Retigrafico');
-      
-      // --- HEADER ---
-      wsRet.mergeCells('A1:B1');
-      wsRet.getCell('A1').value = 'Rodovia/UF';
-      wsRet.getCell('A1').font = { bold: true };
+      wsRet.mergeCells('A1:B1'); wsRet.getCell('A1').value = 'Rodovia/UF'; wsRet.getCell('A1').font={bold:true};
       wsRet.getCell('C1').value = state.rodoviaUF || '';
       
-      // LEGENDA
       wsRet.getCell('A3').value = 'Legenda:';
-      const legend = [
-          { cell:'B3', val:'1', fill:'FF8BC34A', text:'Bom' },
-          { cell:'B4', val:'2', fill:'FFFFEB3B', text:'Regular' },
-          { cell:'B5', val:'3', fill:'FFF44336', text:'Crítico' }
-      ];
-      legend.forEach(l => {
-          const c = wsRet.getCell(l.cell);
-          c.value = l.val;
-          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: l.fill } };
-          c.alignment = { horizontal: 'center' };
-          c.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
-          
-          const labelCell = wsRet.getCell(l.cell.replace('B','C'));
-          labelCell.value = l.text;
+      opts.forEach((o, i) => {
+          const row = 3 + i;
+          const c = wsRet.getCell('B'+row);
+          c.value = o.v;
+          // Excel argb remove #
+          c.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+o.color.substring(1)} };
+          c.alignment = {horizontal:'center'}; c.border = {top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+          wsRet.getCell('C'+row).value = o.name || o.l; // Nome completo se tiver
       });
 
-      // ESTATÍSTICAS
-      wsRet.getCell('A7').value = 'Estatísticas:';
-      wsRet.getCell('A8').value = `Bom: ${Math.round((b/total)*100 || 0)}%`;
-      wsRet.getCell('A9').value = `Regular: ${Math.round((m/total)*100 || 0)}%`;
-      wsRet.getCell('A10').value = `Crítico: ${Math.round((c/total)*100 || 0)}%`;
+      // Stats Texto
+      const statStartRow = 3 + opts.length + 2; 
+      wsRet.getCell('A'+statStartRow).value = 'Estatísticas:';
+      opts.forEach((o, i) => {
+         const row = statStartRow + 1 + i;
+         const pct = Math.round((counts[i]/total)*100) || 0;
+         wsRet.getCell('A'+row).value = `${o.l}: ${pct}%`;
+      });
 
-      // INSERIR GRÁFICO (IMAGEM)
-      const chartImg = generatePieChartImage(b, m, c);
+      // Gráfico
+      const chartImg = generatePieChartImage(counts, opts);
       const chartId = wb.addImage({ base64: chartImg.split(',')[1], extension: 'png' });
-      wsRet.addImage(chartId, {
-          tl: { col: 5, row: 1 }, // Coluna E, Linha 2
-          ext: { width: 400, height: 300 }
-      });
+      wsRet.addImage(chartId, { tl: { col: 4, row: 1 }, ext: { width: 300, height: 250 } });
 
-      // --- MATRIZ DE KMs (Grid) ---
-      const startRow = 17;
-      
-      // Cabeçalho da Grade (KMs rotacionados)
+      // Grid
+      const startRow = statStartRow + opts.length + 3;
       wsRet.getCell(`A${startRow}`).value = 'Sentido';
-      wsRet.getCell(`A${startRow}`).font = { bold: true };
-      wsRet.getCell(`A${startRow}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
       
-      // Configurar Coluna A
-      wsRet.getColumn(1).width = 20;
-
-      // Colunas dos KMs
-      let colIdx = 3; // Começa na Coluna C
+      let colIdx = 3;
       kms.forEach(km => {
-          const cell = wsRet.getCell(startRow, colIdx);
-          cell.value = km;
-          cell.alignment = { textRotation: 90, horizontal: 'center', vertical: 'middle' };
-          cell.font = { bold: true };
-          cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
-          wsRet.getColumn(colIdx).width = 4; // Coluna estreita
+          const c = wsRet.getCell(startRow, colIdx); c.value = km;
+          c.alignment = { textRotation:90, horizontal:'center', vertical:'middle' }; c.font={bold:true};
+          c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0E0E0'}}; c.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+          wsRet.getColumn(colIdx).width = 4;
           colIdx++;
       });
 
-      // Linhas dos Sentidos
       let rowIdx = startRow + 1;
       sentidos.forEach(s => {
-          // Nome do Sentido
-          const cSec = wsRet.getCell(rowIdx, 1);
-          cSec.value = s;
-          cSec.font = { bold: true };
-          cSec.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
-          
-          // Células Coloridas
+          const cSec = wsRet.getCell(rowIdx, 1); cSec.value = s; cSec.font={bold:true};
           let cK = 3;
           kms.forEach(km => {
               const p = state.data[s]?.[km];
-              const cell = wsRet.getCell(rowIdx, cK);
-              
+              const c = wsRet.getCell(rowIdx, cK);
+              c.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
               if(p && p.status){
-                  let color = 'FFFFFFFF';
-                  if(p.status === 1) color = 'FF8BC34A';
-                  if(p.status === 2) color = 'FFFFEB3B';
-                  if(p.status === 3) color = 'FFF44336';
-                  
-                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
-                  cell.value = p.status;
+                 const opt = opts.find(o => o.v === p.status);
+                 if(opt) c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+opt.color.substring(1)}};
+                 c.value = p.status; c.alignment={horizontal:'center'};
               }
-              cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
-              cell.alignment = { horizontal: 'center' };
-              
               cK++;
           });
           rowIdx++;
       });
 
-
-      // ==========================================
-      // ABA 2: COLETA (Relatório Detalhado)
-      // ==========================================
+      // ABA 2: COLETA
       const wsCol = wb.addWorksheet('Coleta');
-      
-      // Cabeçalho Estilizado
       const headers = ["Rodovia", "KM", "Seção", "Status", "Obs", "Foto 1", "Foto 2", "Foto 3"];
-      const headerRow = wsCol.addRow(headers);
-      headerRow.height = 25;
-      headerRow.eachCell((cell) => {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B3D91' } }; // Azul Escuro
-          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
-          cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      });
+      const hRow = wsCol.addRow(headers);
+      hRow.eachCell(c => { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0B3D91'}}; c.font={color:{argb:'FFFFFFFF'},bold:true}; });
       
-      // Larguras
-      wsCol.getColumn(1).width = 15;
-      wsCol.getColumn(2).width = 10;
-      wsCol.getColumn(3).width = 15;
-      wsCol.getColumn(4).width = 10;
-      wsCol.getColumn(5).width = 30;
-      wsCol.getColumn(6).width = 20;
-      wsCol.getColumn(7).width = 20;
-      wsCol.getColumn(8).width = 20;
-
-      let coletaRow = 2;
+      let colRow = 2;
       kms.forEach(km => {
           sentidos.forEach(s => {
               const p = state.data[s]?.[km] || {};
-              const row = wsCol.addRow([
-                  state.rodoviaUF,
-                  km,
-                  s,
-                  p.status,
-                  p.obs,
-                  '', '', '' // Placeholders para fotos
-              ]);
-              row.height = 80; // Altura para caber a foto
-              
-              // Estilização das células
-              row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle', bold: true };
-              row.getCell(3).alignment = { vertical: 'middle' };
-              row.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
-              
-              // Bordas
-              row.eachCell(c => c.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} });
-
-              // Inserir Imagens
-              if (p.photos && p.photos.length > 0) {
-                  p.photos.forEach((ph, idx) => {
-                      if (idx > 2) return; // Máximo 3 fotos
-                      if (!ph.data) return;
-                      
-                      const imgId = wb.addImage({
-                          base64: ph.data.split(',')[1],
-                          extension: 'jpeg'
-                      });
-                      
-                      wsCol.addImage(imgId, {
-                          tl: { col: 5 + idx, row: coletaRow - 1 }, // Coluna F=5 indexado em 0
-                          ext: { width: 100, height: 75 },
-                          editAs: 'oneCell'
-                      });
-                  });
+              const row = wsCol.addRow([state.rodoviaUF, km, s, p.status, p.obs, '', '', '']);
+              row.height = 80;
+              if(p.photos){
+                 p.photos.forEach((ph, i) => {
+                     if(i>2 || !ph.data) return;
+                     const imgId = wb.addImage({base64:ph.data.split(',')[1], extension:'jpeg'});
+                     wsCol.addImage(imgId, { tl: { col: 5+i, row: colRow-1 }, ext: { width:100, height:75 }, editAs:'oneCell' });
+                 });
               }
-              coletaRow++;
+              colRow++;
           });
       });
 
@@ -697,68 +664,32 @@
       saveAs(new Blob([buf]), `Retigrafico_${state.rodoviaUF || 'Export'}.xlsx`);
     }
 
-    async function shareFile() {
-      // Usa a mesma lógica do exportXLSX para gerar o arquivo compartilhado
-      // Simplificado aqui para caber no exemplo, mas idealmente reutiliza o buffer do exportXLSX
-      alert("Para compartilhar no formato novo, use o botão 'XLSX' para baixar e envie o arquivo manualmente, ou aguarde atualização do navegador.");
-      // (Implementação completa do share requer refatorar o exportXLSX para retornar o buffer em vez de salvar direto)
-    }
+    function shareFile() { alert("Use o botão XLSX para baixar e compartilhar manualmente."); }
+    function exportCSV(){ alert("Use XLSX para o relatório completo."); }
 
-    function exportCSV(){
-      const rows=[["rodoviaUF","km","secao","status","observacao"]];
-      range(state.kmStart,state.kmEnd).forEach(km=>{
-        getSecoes().forEach(sec=>{
-          ensure(sec,km);
-          const p=state.data[sec][km];
-          rows.push([state.rodoviaUF, km, sec, p.status||'', (p.obs||'').replace(/"/g,'""')]);
-        });
-      });
-      const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
-      const blob=new Blob([csv],{type:'text/plain;charset=utf-8'});
-      saveAs(blob,'retigrafico.csv');
-    }
-
-    // --- MANIPULAÇÃO DE ARQUIVOS E FOTOS ---
     async function handlePhoto(e, row, secao, km){ 
         const file = e.target.files[0]; if(!file)return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            row.photos.push({data:ev.target.result, ts:new Date().toISOString()});
-            renderAll();
-        };
+        reader.onload = (ev) => { row.photos.push({data:ev.target.result, ts:new Date().toISOString()}); renderAll(); };
         reader.readAsDataURL(file);
     }
-
-    function openSaveModal() {
-      const modal = document.getElementById('saveModal');
-      const input = document.getElementById('saveFileName');
-      const today = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-      input.value = state.metadata.name || `Retigrafico - ${today}`;
-      modal.classList.remove('hidden');
-      document.getElementById('btnConfirmSave').onclick = () => {
-        saveFile(input.value);
-        modal.classList.add('hidden');
-      };
+    function openSaveModal() { 
+       const m = document.getElementById('saveModal'); const i = document.getElementById('saveFileName');
+       const t = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+       i.value = state.metadata.name || `Retigrafico - ${t}`;
+       m.classList.remove('hidden');
+       document.getElementById('btnConfirmSave').onclick = () => { saveFile(i.value); m.classList.add('hidden'); };
     }
-
     function saveFile(name) {
       if (!currentId) currentId = 'file_' + Date.now();
-      state.metadata.name = name;
-      state.metadata.lastModified = new Date().toISOString();
-      try { localStorage.setItem(currentId, JSON.stringify(state)); } 
-      catch(e) { alert('Erro: Espaço insuficiente.'); return; }
-      
-      let list = [];
-      try { list = JSON.parse(localStorage.getItem(INDEX_KEY)) || []; } catch {}
+      state.metadata.name = name; state.metadata.lastModified = new Date().toISOString();
+      try { localStorage.setItem(currentId, JSON.stringify(state)); } catch(e) { alert('Erro: Espaço insuficiente.'); return; }
+      let list = []; try { list = JSON.parse(localStorage.getItem(INDEX_KEY)) || []; } catch {}
       list = list.filter(item => item.id !== currentId);
       list.push({ id: currentId, name: name, date: new Date().toISOString(), desc: `Km ${state.kmStart} a ${state.kmEnd}` });
       localStorage.setItem(INDEX_KEY, JSON.stringify(list));
-      
-      hasUnsavedChanges = false;
-      alert('Salvo!');
-      document.getElementById('fileLabel').innerText = name;
+      hasUnsavedChanges = false; alert('Salvo!'); document.getElementById('fileLabel').innerText = name;
     }
-
     function goBack() {
       if (hasUnsavedChanges) {
         document.getElementById('exitModal').classList.remove('hidden');
@@ -767,14 +698,20 @@
       } else { window.location.href = 'index.html'; }
     }
 
+    // HANDLERS DE INTERFACE
     document.getElementById('btnReset').onclick = () => requestEditAccess(() => document.getElementById('resetModal').classList.remove('hidden'));
     document.getElementById('btnSafetyExport').onclick = () => exportXLSX();
     document.getElementById('btnConfirmReset').onclick = () => { state.data={}; renderAll(); document.getElementById('resetModal').classList.add('hidden'); };
-    
     document.getElementById('btnSave').onclick = openSaveModal;
     document.getElementById('btnShare').onclick = shareFile;
     document.getElementById('btnExportCSV').onclick = exportCSV;
     document.getElementById('btnExportXLSX').onclick = exportXLSX;
+    
+    // MODEL SELECT CHANGE
+    document.getElementById('modelSelect').onchange = () => requestEditAccess(() => {
+        state.model = document.getElementById('modelSelect').value;
+        renderAll();
+    });
 
     document.getElementById('btnGerar').onclick = () => requestEditAccess(() => {
         state.kmStart = parseInt(document.getElementById('kmStart').value)||0;
@@ -788,6 +725,18 @@
           if(id==='rodoviaUF') state.rodoviaUF=document.getElementById(id).value;
           else state[id]=parseInt(document.getElementById(id).value)||0;
        });
+    });
+
+    document.getElementById('btnTudoBom').onclick = () => requestEditAccess(() => {
+        if(!state.kmStart) return;
+        if(confirm('Marcar vazios como 1 (Bom/Limpa)?')){
+            const kms=range(state.kmStart,state.kmEnd);
+            getSecoes().forEach(s=>kms.forEach(k=>{
+                ensure(s,k);
+                if(!state.data[s][k].status) state.data[s][k].status=1;
+            }));
+            renderAll();
+        }
     });
 
     init();
