@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>Retigráfico - Multi-Avaliação</title>
 
-  <link rel="manifest" href="manifest.webmanifest?v=4">
+  <link rel="manifest" href="manifest.webmanifest?v=5">
   <meta name="theme-color" content="#f8fafc">
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -16,7 +16,7 @@
     :root{
       --ok:#8BC34A; --mid:#FFEB3B; --bad:#F44336;
       --worse:#9C27B0; --dead:#212121;
-      --yes:#F44336; --no:#8BC34A; /* Sim=Vermelho (Problema), Não=Verde (Limpo) */
+      --yes:#F44336; --no:#8BC34A; /* Sim=Vermelho, Não=Verde */
       --ink:#020617; --muted:#64748b; --brand:#0ea5e9;
       --bg:#f8fafc; --card:#ffffff;
       --radius:16px; --kmA:#f5fbff; --kmB:#ffffff;
@@ -47,6 +47,13 @@
     .grid{display:grid;gap:10px}
     .g-3{grid-template-columns:repeat(3,1fr)}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    
+    /* ALINHAMENTO CENTRAL FORÇADO PARA OS CHIPS */
+    .row.center-chips {
+      justify-content: center;
+      width: 100%;
+    }
+
     label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
     
     input,button,select{ padding:12px; border-radius:12px; border:1px solid #cbd5e1; font-size:16px; outline:none; }
@@ -86,19 +93,23 @@
     .chip.dead.active { background:var(--dead); border-color:#000; color:#fff; }
     
     /* Chips Binários (Sim/Não) */
-    .chip.yes.active { background:var(--yes); border-color:#b71c1c; color:#fff; } /* Sim = Problema */
-    .chip.no.active { background:var(--no); border-color:#33691e; color:#fff; }   /* Não = Ok */
+    .chip.yes.active { background:var(--yes); border-color:#b71c1c; color:#fff; }
+    .chip.no.active { background:var(--no); border-color:#33691e; color:#fff; }
 
     /* FOTOS */
     .photo-thumb{ width:50px; height:50px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer; }
     .photo-grid{ display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
     .photo-empty{ width:50px; height:50px; border-radius:8px; border:2px dashed #cbd5e1; display:flex; align-items:center; justify-content:center; color:#64748b; cursor:pointer; background:#f8fafc; font-size:18px; }
 
-    /* PARÂMETROS EXTRAS */
+    /* HEATMAP REFORMULADO */
+    .heat-grid{ display:grid; gap:1px; margin-top:10px; overflow-x:auto; border-radius:8px; border:1px solid #e2e8f0; background:#e2e8f0; }
+    .heat-row{ display:grid; grid-auto-flow:column; }
+    .heat-cell{ width:28px; height:28px; font-size:11px; display:flex; align-items:center; justify-content:center; border-right:1px solid #e2e8f0; }
+    .heat-label{ width:120px; justify-content:flex-start; padding-left:8px; font-weight:600; background:#fff; font-size:11px; }
+
     .params-box { background: #f1f5f9; padding: 12px; border-radius: 12px; margin-top: 10px; }
     .check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; }
-    .check-row span { font-size: 14px; font-weight: 500; }
-
+    
     .icon-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .icon-wa { width: 18px; height: 18px; fill: currentColor; }
 
@@ -117,7 +128,7 @@
     </header>
 
     <div class="card">
-      <div class="card-title" style="font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between">
+      <div class="card-title" style="font-weight:700;margin-bottom:12px">
         <span>1. Parâmetros & Escopo</span>
       </div>
       
@@ -140,15 +151,9 @@
         </div>
 
         <div class="grid g-3">
-          <label class="check-row">
-            <input type="checkbox" id="checkDrenagem"> <span>2. Drenagem (1-3)</span>
-          </label>
-          <label class="check-row">
-            <input type="checkbox" id="checkCata"> <span>3. Cata-Cata (S/N)</span>
-          </label>
-          <label class="check-row">
-            <input type="checkbox" id="checkPoda"> <span>4. Poda (S/N)</span>
-          </label>
+          <label class="check-row"><input type="checkbox" id="checkDrenagem"> <span>2. Drenagem (1-3)</span></label>
+          <label class="check-row"><input type="checkbox" id="checkCata"> <span>3. Cata-Cata (S/N)</span></label>
+          <label class="check-row"><input type="checkbox" id="checkPoda"> <span>4. Poda (S/N)</span></label>
         </div>
       </div>
 
@@ -169,8 +174,7 @@
       </div>
       <div class="table-wrap">
         <table id="mainTable">
-          <thead id="tableHead">
-            </thead>
+          <thead id="tableHead"></thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
@@ -181,9 +185,7 @@
         <span>3. Visualização (Heatmap)</span>
       </div>
       <div id="heatWrap"></div>
-      <div id="statsWrap"></div>
-
-      <div class="row btn-row" style="margin-top:20px; justify-content:flex-end; border-top:1px solid #e2e8f0; padding-top:16px">
+      <div id="statsWrap"></div> <div class="row btn-row" style="margin-top:20px; justify-content:flex-end; border-top:1px solid #e2e8f0; padding-top:16px">
         <button id="btnSave" style="background:#64748b">Salvar</button>
         <button id="btnExportXLSX" class="ghost">Baixar Relatório (XLSX)</button>
         <button id="btnShare" style="background:#25D366; color:#fff" class="icon-btn">
@@ -230,16 +232,11 @@
     let currentId = null;
     let isProtected = false;
     
-    // ESTADO PADRÃO (Agora com configurações detalhadas)
+    // ESTADO PADRÃO
     let state = {
       kmStart:0, kmEnd:0, rodoviaUF:'', selectedSecoes:[], 
       data:{},
-      config: {
-        rocada: '1-3', // 1-3, 1-5, none
-        drenagem: false,
-        cata: false,
-        poda: false
-      },
+      config: { rocada: '1-3', drenagem: false, cata: false, poda: false },
       metadata: { created: new Date().toISOString() }
     };
 
@@ -252,7 +249,7 @@
       {v:4, l:'Pés', c:'worse', hex:'9C27B0'}, {v:5, l:'Int', c:'dead', hex:'212121'}
     ];
     const OPTS_DRENAGEM = [
-      {v:1, l:'Lmp', c:'ok', hex:'8BC34A', t:'Limpa'}, {v:2, l:'Suj', c:'mid', hex:'FFEB3B', t:'Suja'}, {v:3, l:'Obs', c:'bad', hex:'F44336', t:'Obstruída'}
+      {v:1, l:'Limpa', c:'ok', hex:'8BC34A'}, {v:2, l:'Suja', c:'mid', hex:'FFEB3B'}, {v:3, l:'Obs', c:'bad', hex:'F44336'}
     ];
     
     // --- INICIALIZAÇÃO ---
@@ -264,7 +261,6 @@
         const raw = localStorage.getItem(id);
         if (raw) {
           state = JSON.parse(raw);
-          // Migração de arquivos antigos
           if(!state.config) state.config = { rocada:'1-3', drenagem:false, cata:false, poda:false };
           currentId = id; isProtected = true;
           document.getElementById('fileLabel').innerText = state.metadata.name || 'Arquivo Salvo';
@@ -315,7 +311,7 @@
 
       renderSentidosBox();
       renderTable();
-      renderHeat(); 
+      renderHeat();
     }
 
     function renderSentidosBox() {
@@ -377,42 +373,35 @@
             tr.appendChild(tdK);
           }
           
-          // Seção
           const tdS = document.createElement('td'); tdS.textContent = sec; tr.appendChild(tdS);
 
-          // COLUNAS DINÂMICAS
-          // A: Roçada
+          // COLUNAS DINÂMICAS (Com correção de alinhamento)
           if(state.config.rocada !== 'none') {
              const td = document.createElement('td');
              const opts = state.config.rocada === '1-5' ? OPTS_ROCADA_5 : OPTS_ROCADA_3;
              renderChips(td, rowData, 'rocada', opts);
              tr.appendChild(td);
           }
-          // B: Drenagem
           if(state.config.drenagem) {
              const td = document.createElement('td');
              renderChips(td, rowData, 'drenagem', OPTS_DRENAGEM);
              tr.appendChild(td);
           }
-          // C: Cata-Cata (Sim/Não)
           if(state.config.cata) {
              const td = document.createElement('td');
              renderBinary(td, rowData, 'cata');
              tr.appendChild(td);
           }
-          // D: Poda (Sim/Não)
           if(state.config.poda) {
              const td = document.createElement('td');
              renderBinary(td, rowData, 'poda');
              tr.appendChild(td);
           }
 
-          // Fotos
           const tdF = document.createElement('td');
           renderPhotos(tdF, rowData, sec, km);
           tr.appendChild(tdF);
 
-          // Obs
           const tdO = document.createElement('td');
           const imp = document.createElement('input'); 
           imp.value = rowData.obs||''; imp.placeholder='...';
@@ -424,9 +413,9 @@
       });
     }
 
-    // HELPERS DE RENDERIZAÇÃO
     function renderChips(container, dataObj, key, opts) {
       const div = document.createElement('div');
+      div.className = 'row center-chips'; // CLASSE NOVA DE ALINHAMENTO
       opts.forEach(o => {
         const c = document.createElement('div');
         c.className = `chip ${o.c}`;
@@ -435,6 +424,7 @@
         c.onclick = () => requestEdit(() => {
           dataObj[key] = (dataObj[key] === o.v ? null : o.v);
           renderTable();
+          renderHeat();
         });
         div.appendChild(c);
       });
@@ -443,18 +433,17 @@
 
     function renderBinary(container, dataObj, key) {
       const div = document.createElement('div');
+      div.className = 'row center-chips'; // CLASSE NOVA DE ALINHAMENTO
       
-      // Sim = Problema (Vermelho)
       const yes = document.createElement('div'); 
       yes.className = 'chip yes'; yes.textContent = 'Sim';
       if(dataObj[key] === 'S') yes.classList.add('active');
-      yes.onclick = () => requestEdit(() => { dataObj[key] = (dataObj[key]==='S'?null:'S'); renderTable(); });
+      yes.onclick = () => requestEdit(() => { dataObj[key] = (dataObj[key]==='S'?null:'S'); renderTable(); renderHeat(); });
 
-      // Não = Ok (Verde)
       const no = document.createElement('div'); 
       no.className = 'chip no'; no.textContent = 'Não';
       if(dataObj[key] === 'N') no.classList.add('active');
-      no.onclick = () => requestEdit(() => { dataObj[key] = (dataObj[key]==='N'?null:'N'); renderTable(); });
+      no.onclick = () => requestEdit(() => { dataObj[key] = (dataObj[key]==='N'?null:'N'); renderTable(); renderHeat(); });
 
       div.appendChild(yes); div.appendChild(no);
       container.appendChild(div);
@@ -484,57 +473,147 @@
         reader.readAsDataURL(file);
     }
 
-    // --- VISUAL HEATMAP (Simplificado para o item principal) ---
+    // --- VISUAL HEATMAP MULTI-LINHA ---
+    function getActiveConfigs() {
+      const list = [];
+      if(state.config.rocada !== 'none') list.push({ key:'rocada', label:'Roçada', type:'scale' });
+      if(state.config.drenagem) list.push({ key:'drenagem', label:'Drenagem', type:'scale' });
+      if(state.config.cata) list.push({ key:'cata', label:'Cata-Cata', type:'bin' });
+      if(state.config.poda) list.push({ key:'poda', label:'Poda', type:'bin' });
+      return list;
+    }
+
     function renderHeat() {
       const wrap = document.getElementById('heatWrap'); wrap.innerHTML='';
       if(!state.kmStart) return;
-      
-      // Define o que plotar: Roçada (se ativo) ou Drenagem
-      let targetKey = 'rocada';
-      let opts = state.config.rocada === '1-5' ? OPTS_ROCADA_5 : OPTS_ROCADA_3;
-      
-      if(state.config.rocada === 'none') {
-        if(state.config.drenagem) { targetKey = 'drenagem'; opts = OPTS_DRENAGEM; }
-        else { wrap.innerHTML = '<div style="padding:10px;text-align:center;color:#999">Nenhum item classificável ativo para Heatmap.</div>'; return; }
-      }
+
+      const configs = getActiveConfigs();
+      if(configs.length === 0) { wrap.innerHTML = '<div style="padding:10px;text-align:center;color:#999">Nenhuma avaliação ativa.</div>'; return; }
 
       const kms = range(state.kmStart, state.kmEnd);
       const frame = document.createElement('div'); frame.className='heat-grid';
       
-      // Header
+      // Linha de KMs (Topo)
       const hRow = document.createElement('div'); hRow.className='heat-row';
-      hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell'}));
-      kms.forEach(k=>hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:k,style:'font-weight:bold'})));
+      hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell heat-label', textContent:'Seção/Item'}));
+      kms.forEach(k=>hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:k,style:'font-weight:bold;background:#e2e8f0'})));
       frame.appendChild(hRow);
 
       getSecoes().forEach(s => {
-        const row = document.createElement('div'); row.className='heat-row';
-        row.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:s,style:'width:50px;justify-content:flex-start'}));
-        kms.forEach(k => {
-           ensure(s,k); const val = state.data[s][k][targetKey];
-           const cell = document.createElement('div'); cell.className='heat-cell';
-           const opt = opts.find(o => o.v === val);
-           if(opt) {
-             cell.style.background = '#'+opt.hex;
-             cell.textContent = val;
-             if(['worse','dead'].includes(opt.c)) cell.style.color='#fff';
-           }
-           row.appendChild(cell);
+        configs.forEach(conf => {
+           const row = document.createElement('div'); row.className='heat-row';
+           const labelDiv = document.createElement('div'); 
+           labelDiv.className='heat-cell heat-label';
+           labelDiv.textContent = `${s} - ${conf.label}`;
+           labelDiv.style.fontSize = '10px';
+           row.appendChild(labelDiv);
+
+           kms.forEach(k => {
+             ensure(s,k); const val = state.data[s][k][conf.key];
+             const cell = document.createElement('div'); cell.className='heat-cell';
+             
+             if(val) {
+               let color = '#e0e0e0';
+               let txtColor = '#000';
+               
+               if(conf.type === 'scale') {
+                  const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : 
+                               (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
+                  const found = opts.find(o => o.v === val);
+                  if(found) { color = '#'+found.hex; if(['worse','dead'].includes(found.c)) txtColor='#fff'; }
+               } else {
+                  // Binário
+                  if(val === 'S') { color = '#F44336'; txtColor='#fff'; } // Problema
+                  if(val === 'N') { color = '#8BC34A'; txtColor='#fff'; } // Ok
+               }
+               cell.style.background = color;
+               cell.style.color = txtColor;
+               cell.textContent = val;
+             }
+             row.appendChild(cell);
+           });
+           frame.appendChild(row);
         });
-        frame.appendChild(row);
       });
       wrap.appendChild(frame);
     }
 
-    // --- EXPORTAÇÃO XLSX INTELIGENTE ---
+    // --- EXPORTAÇÃO XLSX (Restaurando Aba Visual) ---
     async function exportXLSX() {
       if(!state.kmStart) { alert('Sem dados.'); return; }
       const wb = new ExcelJS.Workbook();
       
-      // ABA 1: COLETA DETALHADA
+      const kms = range(state.kmStart, state.kmEnd);
+      const configs = getActiveConfigs();
+
+      // ==========================================
+      // ABA 1: RETIGRAFICO (VISUAL)
+      // ==========================================
+      const wsRet = wb.addWorksheet('Retigrafico');
+      
+      // Cabeçalho Info
+      wsRet.mergeCells('A1:B1'); wsRet.getCell('A1').value = 'Rodovia/UF'; wsRet.getCell('A1').font={bold:true};
+      wsRet.getCell('C1').value = state.rodoviaUF || '';
+      
+      // Montagem da Matriz Visual
+      const startRow = 3;
+      wsRet.getCell(`A${startRow}`).value = 'Item Avaliado';
+      wsRet.getColumn(1).width = 25; // Coluna A mais larga para os nomes
+
+      // KMs no Topo (Rotacionados)
+      let colIdx = 2; // Começa na B
+      kms.forEach(km => {
+         const c = wsRet.getCell(startRow, colIdx); 
+         c.value = km;
+         c.alignment = { textRotation:90, horizontal:'center', vertical:'middle' }; 
+         c.font={bold:true}; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0E0E0'}};
+         c.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+         wsRet.getColumn(colIdx).width = 4;
+         colIdx++;
+      });
+
+      let rowIdx = startRow + 1;
+      getSecoes().forEach(s => {
+         configs.forEach(conf => {
+            const labelCell = wsRet.getCell(rowIdx, 1);
+            labelCell.value = `${s} - ${conf.label}`;
+            labelCell.font = {bold:true, size:10};
+            labelCell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+            
+            let cK = 2;
+            kms.forEach(km => {
+               const val = state.data[s]?.[km]?.[conf.key];
+               const cell = wsRet.getCell(rowIdx, cK);
+               cell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+               cell.alignment={horizontal:'center', vertical:'middle'};
+               
+               if(val) {
+                  cell.value = val;
+                  let argb = 'FFEEEEEE';
+                  
+                  if(conf.type === 'scale') {
+                     const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : 
+                                  (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
+                     const found = opts.find(o => o.v === val);
+                     if(found) argb = 'FF' + found.hex;
+                  } else {
+                     if(val === 'S') argb = 'FFF44336';
+                     if(val === 'N') argb = 'FF8BC34A';
+                  }
+                  cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:argb} };
+               }
+               cK++;
+            });
+            rowIdx++;
+         });
+      });
+
+
+      // ==========================================
+      // ABA 2: COLETA DETALHADA
+      // ==========================================
       const ws = wb.addWorksheet('Coleta');
       
-      // Cabeçalho Dinâmico
       const headers = ["Rodovia", "KM", "Seção"];
       if(state.config.rocada !== 'none') headers.push("Roçada");
       if(state.config.drenagem) headers.push("Drenagem");
@@ -545,9 +624,7 @@
       const hRow = ws.addRow(headers);
       hRow.eachCell(c => { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0B3D91'}}; c.font={color:{argb:'FFFFFFFF'},bold:true}; });
 
-      const kms = range(state.kmStart, state.kmEnd);
       let imgRow = 2;
-
       kms.forEach(km => {
         getSecoes().forEach(sec => {
           const d = state.data[sec]?.[km] || {};
@@ -562,12 +639,10 @@
           const r = ws.addRow(rowData);
           r.height = 70;
           
-          // Fotos
           if(d.photos) {
             d.photos.forEach((ph, i) => {
               if(i>2 || !ph.data) return;
               const imgId = wb.addImage({base64:ph.data.split(',')[1], extension:'jpeg'});
-              // Calcula coluna da foto (headers.length - 3 + i)
               const colIdx = headers.length - 3 + i;
               ws.addImage(imgId, { tl:{col:colIdx, row:imgRow-1}, ext:{width:90, height:60} });
             });
@@ -592,7 +667,6 @@
          state.metadata.lastModified = new Date().toISOString();
          localStorage.setItem(currentId, JSON.stringify(state));
          
-         // Atualiza Index
          let idx = JSON.parse(localStorage.getItem(INDEX_KEY) || '[]');
          idx = idx.filter(x => x.id !== currentId);
          idx.push({ id:currentId, name:name, date:state.metadata.lastModified, desc:`Km ${state.kmStart}-${state.kmEnd}` });
