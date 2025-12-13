@@ -1,6 +1,8 @@
 {
+  "id": "/retigrafico/",
   "name": "Retigráfico de Roçada",
   "short_name": "Retigráfico",
+  "description": "App para gestão de roçada, drenagem e manutenção rodoviária offline.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
