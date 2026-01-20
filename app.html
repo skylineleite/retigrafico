@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-  <title>Retigráfico - Multi-Avaliação</title>
+  <title>Retigráfico - AutoSave</title>
 
-  <link rel="manifest" href="manifest.webmanifest?v=6">
+  <link rel="manifest" href="manifest.webmanifest?v=7">
   <meta name="theme-color" content="#f8fafc">
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -16,7 +16,7 @@
     :root{
       --ok:#8BC34A; --mid:#FFEB3B; --bad:#F44336;
       --worse:#9C27B0; --dead:#212121;
-      --yes:#F44336; --no:#8BC34A; /* Sim=Vermelho, Não=Verde */
+      --yes:#F44336; --no:#8BC34A;
       --ink:#020617; --muted:#64748b; --brand:#0ea5e9;
       --bg:#f8fafc; --card:#ffffff;
       --radius:16px; --kmA:#f5fbff; --kmB:#ffffff;
@@ -38,6 +38,15 @@
       padding:8px 12px; border-radius:10px; font-weight:600; font-size:14px;
       cursor:pointer; display:flex; align-items:center; gap:4px;
     }
+
+    /* INDICADOR DE SALVAMENTO */
+    #saveStatus {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      padding: 4px 8px; border-radius: 4px; display: none;
+    }
+    .status-saved { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .status-saving { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .status-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
     .card{
       background:var(--card); border-radius:var(--radius);
@@ -61,26 +70,21 @@
     button.warn{ background:#fff; color:#d97706; border:1px solid #d97706; }
     button.danger{ background:#fee2e2; color:#ef4444; border:1px solid #ef4444; }
     
-    /* ESTILO LISTA VERTICAL DE PARÂMETROS */
     .params-box { background: #f1f5f9; padding: 16px; border-radius: 12px; margin-top: 10px; }
     .check-list { display: flex; flex-direction: column; gap: 12px; }
     .check-row { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px 0; }
     .check-row span { font-size: 15px; font-weight: 500; color: var(--ink); }
-    .check-row:hover span { color: var(--brand); }
 
-    /* MODAIS */
     .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(4px); }
     .modal-card { background:#fff; padding:24px; border-radius:16px; width:340px; max-width:90%; text-align:center; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); }
     .hidden{display:none;}
 
-    /* TABELA */
     .table-wrap{ max-height:600px; overflow:auto; border-radius:12px; border:1px solid #e2e8f0; margin-top:12px; }
     table{ border-collapse:separate; border-spacing:0; width:100%; font-size:14px; min-width:800px; }
     th,td{ border-bottom:1px solid #e2e8f0; padding:10px; text-align:center; vertical-align:middle; }
     th{ background:#f1f5f9; font-size:12px; text-transform:uppercase; color:#475569; position:sticky; top:0; z-index:2; font-weight:700; }
     td:first-child, td:nth-child(2) { text-align: left; } 
     
-    /* CHIPS */
     .chip{ padding:6px 4px; border-radius:6px; border:1px solid #cbd5e1; background:#f1f5f9; color:#334155; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; min-width:32px; transition:all 0.1s; margin:0 2px; }
     .chip.active { transform:scale(1.1); border-width:2px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); z-index:1; }
     .chip.ok.active { background:var(--ok); border-color:#558b2f; color:#fff; }
@@ -91,12 +95,10 @@
     .chip.yes.active { background:var(--yes); border-color:#b71c1c; color:#fff; }
     .chip.no.active { background:var(--no); border-color:#33691e; color:#fff; }
 
-    /* FOTOS */
     .photo-thumb{ width:50px; height:50px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer; }
     .photo-grid{ display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
     .photo-empty{ width:50px; height:50px; border-radius:8px; border:2px dashed #cbd5e1; display:flex; align-items:center; justify-content:center; color:#64748b; cursor:pointer; background:#f8fafc; font-size:18px; }
 
-    /* HEATMAP */
     .heat-grid{ display:grid; gap:1px; margin-top:10px; overflow-x:auto; border-radius:8px; border:1px solid #e2e8f0; background:#e2e8f0; }
     .heat-row{ display:grid; grid-auto-flow:column; }
     .heat-cell{ width:28px; height:28px; font-size:11px; display:flex; align-items:center; justify-content:center; border-right:1px solid #e2e8f0; }
@@ -112,9 +114,12 @@
     <header>
       <button class="btn-back" onclick="goBack()"><span>&#8592;</span> Voltar</button>
       <img src="app-logo.png" alt="R" style="width:36px;height:36px;border-radius:8px">
-      <div style="flex:1">
+      <div style="flex:1; overflow:hidden">
         <h1 style="font-size:18px;margin:0;line-height:1.2">Retigráfico</h1>
-        <div id="fileLabel" class="small" style="color:var(--muted);font-size:12px">Novo Arquivo</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="fileLabel" class="small" style="color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Novo Arquivo</div>
+          <div id="saveStatus" class="status-saved">Salvo</div>
+        </div>
       </div>
     </header>
 
@@ -139,7 +144,6 @@
           <label class="check-row" style="margin-left: 20px; font-size: 13px; color: var(--muted);">
              <input type="checkbox" id="checkRocada5"> <span>(Ou Detalhada: 1 a 5)</span>
           </label>
-          
           <label class="check-row"><input type="checkbox" id="checkDrenagem"> <span>2. Drenagens (1-3)</span></label>
           <label class="check-row"><input type="checkbox" id="checkCata"> <span>3. Cata-Cata (Lixo)</span></label>
           <label class="check-row"><input type="checkbox" id="checkPoda"> <span>4. Poda</span></label>
@@ -179,7 +183,7 @@
       <div id="heatWrap"></div>
 
       <div class="row btn-row" style="margin-top:20px; justify-content:flex-end; border-top:1px solid #e2e8f0; padding-top:16px">
-        <button id="btnSave" style="background:#64748b">Salvar</button>
+        <button id="btnSave" style="background:#64748b">Renomear / Salvar Como</button>
         <button id="btnExportXLSX" class="ghost">Baixar Relatório (XLSX)</button>
         <button id="btnShare" style="background:#25D366; color:#fff" class="icon-btn">
           <svg class="icon-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
@@ -197,9 +201,9 @@
   </div>
   <div id="saveModal" class="modal-back hidden">
     <div class="modal-card">
-      <h3>Salvar</h3>
+      <h3>Renomear Arquivo</h3>
       <input id="saveFileName" type="text" style="width:100%;margin-bottom:16px">
-      <div class="icon-btn"><button id="btnConfirmSave" style="flex:1">Salvar</button><button onclick="document.getElementById('saveModal').classList.add('hidden')" class="ghost">Cancelar</button></div>
+      <div class="icon-btn"><button id="btnConfirmSave" style="flex:1">Salvar Definitivo</button><button onclick="document.getElementById('saveModal').classList.add('hidden')" class="ghost">Cancelar</button></div>
     </div>
   </div>
   <div id="resetModal" class="modal-back hidden">
@@ -211,107 +215,119 @@
       </div>
     </div>
   </div>
-  <div id="changeModal" class="modal-back hidden">
-    <div class="modal-card">
-      <h3>Alterar Parametros?</h3>
-      <p style="font-size:12px">Isso pode resetar dados se mudar a estrutura.</p>
-      <div class="icon-btn"><button id="btnAllowEdit">Sim</button><button onclick="document.getElementById('changeModal').classList.add('hidden')" class="ghost">Não</button></div>
-    </div>
-  </div>
 
   <script>
-    // --- CONFIGURAÇÃO ---
     const INDEX_KEY = 'retigrafico_index_v1';
+    const TEMP_KEY = 'retigrafico_autosave_temp'; // Chave para rascunho sem nome
+    const LAST_OPEN_KEY = 'retigrafico_last_open_id'; // Chave para lembrar onde parou
+
     let currentId = null;
-    let isProtected = false;
-    
-    // ESTADO PADRÃO (Agora com configurações detalhadas)
     let state = {
       kmStart:0, kmEnd:0, rodoviaUF:'', selectedSecoes:[], 
       data:{},
-      config: {
-        rocada: '1-3', // 1-3, 1-5, none
-        drenagem: false,
-        cata: false,
-        poda: false,
-        entulho: false,
-        defensa: false,
-        dispositivo: false
-      },
+      config: { rocada: '1-3', drenagem: false, cata: false, poda: false, entulho: false, defensa: false, dispositivo: false },
       metadata: { created: new Date().toISOString() }
     };
 
-    // OPÇÕES DE VISUALIZAÇÃO
-    const OPTS_ROCADA_3 = [
-      {v:1, l:'Bom', c:'ok', hex:'8BC34A'}, {v:2, l:'Reg', c:'mid', hex:'FFEB3B'}, {v:3, l:'Cri', c:'bad', hex:'F44336'}
-    ];
-    const OPTS_ROCADA_5 = [
-      {v:1, l:'Bom', c:'ok', hex:'8BC34A'}, {v:2, l:'Reg', c:'mid', hex:'FFEB3B'}, {v:3, l:'Cri', c:'bad', hex:'F44336'},
-      {v:4, l:'Pés', c:'worse', hex:'9C27B0'}, {v:5, l:'Int', c:'dead', hex:'212121'}
-    ];
-    const OPTS_DRENAGEM = [
-      {v:1, l:'Lmp', c:'ok', hex:'8BC34A', t:'Limpa'}, {v:2, l:'Suj', c:'mid', hex:'FFEB3B', t:'Suja'}, {v:3, l:'Obs', c:'bad', hex:'F44336', t:'Obstruída'}
-    ];
+    const OPTS_ROCADA_3 = [{v:1,l:'Bom',c:'ok',hex:'8BC34A'}, {v:2,l:'Reg',c:'mid',hex:'FFEB3B'}, {v:3,l:'Cri',c:'bad',hex:'F44336'}];
+    const OPTS_ROCADA_5 = [{v:1,l:'Bom',c:'ok',hex:'8BC34A'}, {v:2,l:'Reg',c:'mid',hex:'FFEB3B'}, {v:3,l:'Cri',c:'bad',hex:'F44336'},{v:4,l:'Pés',c:'worse',hex:'9C27B0'},{v:5,l:'Int',c:'dead',hex:'212121'}];
+    const OPTS_DRENAGEM = [{v:1,l:'Limpa',c:'ok',hex:'8BC34A'}, {v:2,l:'Suja',c:'mid',hex:'FFEB3B'}, {v:3,l:'Obs',c:'bad',hex:'F44336'}];
     
-    // --- INICIALIZAÇÃO ---
+    // --- LÓGICA DE SALVAMENTO AUTOMÁTICO (NO EXCUSES) ---
+    function triggerAutoSave() {
+      // Identifica onde salvar: no ID atual ou no temporário
+      const targetId = currentId || TEMP_KEY;
+      
+      // Atualiza timestamp
+      state.metadata.lastModified = new Date().toISOString();
+      
+      // Feedback visual
+      const statusEl = document.getElementById('saveStatus');
+      statusEl.textContent = 'Salvando...';
+      statusEl.className = 'status-saving';
+      statusEl.style.display = 'block';
+
+      try {
+        // Gravação Síncrona no LocalStorage
+        localStorage.setItem(targetId, JSON.stringify(state));
+        
+        // Se for um arquivo nomeado, atualiza o índice também
+        if(currentId) updateIndexList(currentId, state.metadata.name);
+
+        // Lembra que este foi o último arquivo mexido
+        localStorage.setItem(LAST_OPEN_KEY, targetId);
+
+        // Sucesso
+        setTimeout(() => {
+          statusEl.textContent = 'Salvo';
+          statusEl.className = 'status-saved';
+        }, 500);
+
+      } catch(e) {
+        console.error(e);
+        statusEl.textContent = 'Erro ao Salvar!';
+        statusEl.className = 'status-error';
+        alert("ATENÇÃO: Memória do celular cheia! Pare de tirar fotos ou exporte agora. Seus dados recentes podem não ter sido salvos.");
+      }
+    }
+
+    // Função que encapsula qualquer mudança de dados
+    function dataChanged() {
+      triggerAutoSave();
+    }
+
+    function updateIndexList(id, name) {
+      let idx = [];
+      try { idx = JSON.parse(localStorage.getItem(INDEX_KEY) || '[]'); } catch(e){}
+      // Remove entrada antiga se existir
+      idx = idx.filter(x => x.id !== id);
+      // Adiciona atualizada no topo
+      idx.unshift({ id:id, name:name, date:state.metadata.lastModified, desc:`Km ${state.kmStart}-${state.kmEnd}` });
+      localStorage.setItem(INDEX_KEY, JSON.stringify(idx));
+    }
+
+    // --- INICIALIZAÇÃO ROBUSTA ---
     function init() {
       const p = new URLSearchParams(window.location.search);
-      const id = p.get('id');
-      
-      if (id) {
-        const raw = localStorage.getItem(id);
+      let idToLoad = p.get('id');
+
+      // Se não veio ID na URL, tenta recuperar a última sessão (CRUCIAL PARA O BANCO)
+      if (!idToLoad) {
+        const last = localStorage.getItem(LAST_OPEN_KEY);
+        if(last) idToLoad = last;
+      }
+
+      if (idToLoad) {
+        const raw = localStorage.getItem(idToLoad);
         if (raw) {
-          state = JSON.parse(raw);
-          // Migração Segura
-          if(!state.config) state.config = { rocada:'1-3', drenagem:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false };
-          currentId = id; isProtected = true;
-          document.getElementById('fileLabel').innerText = state.metadata.name || 'Arquivo Salvo';
-          disableInputs(true);
+          try {
+            state = JSON.parse(raw);
+            // Verifica integridade basica
+            if(!state.config) state.config = { rocada:'1-3', drenagem:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false };
+            
+            if (idToLoad === TEMP_KEY) {
+              currentId = null; // Ainda é rascunho
+              document.getElementById('fileLabel').innerText = 'Rascunho Automático (Não Salvo)';
+            } else {
+              currentId = idToLoad;
+              document.getElementById('fileLabel').innerText = state.metadata.name || 'Arquivo Recuperado';
+            }
+          } catch(e) {
+            console.log('Erro ao ler arquivo corrompido');
+          }
         }
       }
       renderAll();
     }
 
-    function disableInputs(disable) {
-      document.getElementById('checkRocada3').disabled = disable;
-      document.getElementById('checkRocada5').disabled = disable;
-      document.getElementById('checkDrenagem').disabled = disable;
-      document.getElementById('checkCata').disabled = disable;
-      document.getElementById('checkPoda').disabled = disable;
-      document.getElementById('checkEntulho').disabled = disable;
-      document.getElementById('checkDefensa').disabled = disable;
-      document.getElementById('checkDispositivo').disabled = disable;
-    }
-
-    function requestEdit(cb) {
-      if(isProtected) {
-        document.getElementById('changeModal').classList.remove('hidden');
-        document.getElementById('btnAllowEdit').onclick = () => {
-          isProtected = false; disableInputs(false);
-          document.getElementById('changeModal').classList.add('hidden');
-          cb();
-        };
-      } else { cb(); }
-    }
-
-    // --- LÓGICA DE DADOS ---
-    function range(a,b){ const r=[]; const s=a<=b?1:-1; for(let i=a;i!==b+s;i+=s)r.push(i); return r; }
-    function getSecoes(){ return state.selectedSecoes.length ? state.selectedSecoes : ["Sul","CC","Norte"]; }
-    
-    function ensure(sec, km) {
-      state.data[sec] ??= {};
-      // Inicializa todos os campos possíveis
-      state.data[sec][km] ??= { rocada:null, drenagem:null, cata:null, poda:null, entulho:null, defensa:null, dispositivo:null, photos:[], obs:'' };
-    }
-
-    // --- RENDERIZADORES ---
+    // --- RENDERIZAÇÃO ---
     function renderAll() {
       // Inputs
       document.getElementById('rodoviaUF').value = state.rodoviaUF || '';
       document.getElementById('kmStart').value = state.kmStart || '';
       document.getElementById('kmEnd').value = state.kmEnd || '';
       
-      // Checkboxes Logic
+      // Configs
       document.getElementById('checkRocada3').checked = (state.config.rocada === '1-3');
       document.getElementById('checkRocada5').checked = (state.config.rocada === '1-5');
       document.getElementById('checkDrenagem').checked = !!state.config.drenagem;
@@ -323,7 +339,7 @@
 
       renderSentidosBox();
       renderTable();
-      renderHeat(); 
+      renderHeat();
     }
 
     function renderSentidosBox() {
@@ -333,29 +349,29 @@
         wrap.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border-radius:8px;border:1px solid #e2e8f0';
         const cb = document.createElement('input'); cb.type='checkbox'; cb.value=s;
         if(getSecoes().includes(s)) cb.checked=true;
-        cb.onclick = (e) => { 
-          if(isProtected) { e.preventDefault(); requestEdit(()=>{ cb.checked=!cb.checked; updateSecoes(); }); }
-          else { setTimeout(updateSecoes,0); }
+        cb.onclick = () => { 
+          // Checkbox toggle logic
+          const checked = Array.from(document.querySelectorAll('#sentidosBox input:checked')).map(i=>i.value);
+          if(cb.checked && !checked.includes(s)) checked.push(s);
+          if(!cb.checked && checked.includes(s)) {
+             const idx = checked.indexOf(s); if(idx>-1) checked.splice(idx,1);
+          }
+          state.selectedSecoes = checked;
+          renderAll(); dataChanged(); 
         };
         wrap.append(cb, s); box.appendChild(wrap);
       });
     }
-    function updateSecoes() {
-      state.selectedSecoes = Array.from(document.querySelectorAll('#sentidosBox input:checked')).map(i=>i.value);
-      renderAll();
-    }
 
-    // --- TABELA DINÂMICA ---
+    // --- TABELA ---
     function renderTable() {
       const thead = document.getElementById('tableHead');
       const tbody = document.getElementById('tbody');
       thead.innerHTML = ''; tbody.innerHTML = '';
-      
       if(!state.kmStart && !state.kmEnd) return;
 
       const trH = document.createElement('tr');
       trH.innerHTML = `<th>KM</th><th>Seção</th>`;
-      
       if(state.config.rocada !== 'none') trH.innerHTML += `<th>Vegetação</th>`;
       if(state.config.drenagem) trH.innerHTML += `<th>Drenagem</th>`;
       if(state.config.cata) trH.innerHTML += `<th>Cata-Cata</th>`;
@@ -363,7 +379,6 @@
       if(state.config.entulho) trH.innerHTML += `<th>Entulho</th>`;
       if(state.config.defensa) trH.innerHTML += `<th>Defensas</th>`;
       if(state.config.dispositivo) trH.innerHTML += `<th>Dispositivos</th>`;
-      
       trH.innerHTML += `<th>Fotos</th><th>Obs</th>`;
       thead.appendChild(trH);
 
@@ -384,19 +399,16 @@
             tdK.style.cssText='font-weight:800;border-right:1px solid #e2e8f0;font-size:16px;vertical-align:middle;text-align:center';
             tr.appendChild(tdK);
           }
-          
           const tdS = document.createElement('td'); tdS.textContent = sec; tr.appendChild(tdS);
 
           if(state.config.rocada !== 'none') {
              const td = document.createElement('td');
              const opts = state.config.rocada === '1-5' ? OPTS_ROCADA_5 : OPTS_ROCADA_3;
-             renderChips(td, rowData, 'rocada', opts);
-             tr.appendChild(td);
+             renderChips(td, rowData, 'rocada', opts); tr.appendChild(td);
           }
           if(state.config.drenagem) {
              const td = document.createElement('td');
-             renderChips(td, rowData, 'drenagem', OPTS_DRENAGEM);
-             tr.appendChild(td);
+             renderChips(td, rowData, 'drenagem', OPTS_DRENAGEM); tr.appendChild(td);
           }
           if(state.config.cata) renderBinary(tr, rowData, 'cata');
           if(state.config.poda) renderBinary(tr, rowData, 'poda');
@@ -405,13 +417,12 @@
           if(state.config.dispositivo) renderBinary(tr, rowData, 'dispositivo');
 
           const tdF = document.createElement('td');
-          renderPhotos(tdF, rowData, sec, km);
-          tr.appendChild(tdF);
+          renderPhotos(tdF, rowData, sec, km); tr.appendChild(tdF);
 
           const tdO = document.createElement('td');
           const imp = document.createElement('input'); 
           imp.value = rowData.obs||''; imp.placeholder='...';
-          imp.onchange = () => requestEdit(()=>{ rowData.obs=imp.value; });
+          imp.onchange = () => { rowData.obs=imp.value; dataChanged(); };
           tdO.appendChild(imp); tr.appendChild(tdO);
 
           tbody.appendChild(tr);
@@ -426,11 +437,11 @@
         const c = document.createElement('div');
         c.className = `chip ${o.c}`;
         if(dataObj[key] === o.v) c.classList.add('active');
-        c.textContent = o.v; c.title = o.l;
-        c.onclick = () => requestEdit(() => {
+        c.textContent = o.v; 
+        c.onclick = () => {
           dataObj[key] = (dataObj[key] === o.v ? null : o.v);
-          renderTable(); renderHeat();
-        });
+          renderTable(); renderHeat(); dataChanged(); // AutoSave Trigger
+        };
         div.appendChild(c);
       });
       container.appendChild(div);
@@ -441,19 +452,15 @@
       const div = document.createElement('div');
       div.className = 'row center-chips'; 
       
-      const yes = document.createElement('div'); 
-      yes.className = 'chip yes'; yes.textContent = 'Sim';
+      const yes = document.createElement('div'); yes.className = 'chip yes'; yes.textContent = 'Sim';
       if(dataObj[key] === 'S') yes.classList.add('active');
-      yes.onclick = () => requestEdit(() => { dataObj[key] = (dataObj[key]==='S'?null:'S'); renderTable(); renderHeat(); });
+      yes.onclick = () => { dataObj[key] = (dataObj[key]==='S'?null:'S'); renderTable(); renderHeat(); dataChanged(); };
 
-      const no = document.createElement('div'); 
-      no.className = 'chip no'; no.textContent = 'Não';
+      const no = document.createElement('div'); no.className = 'chip no'; no.textContent = 'Não';
       if(dataObj[key] === 'N') no.classList.add('active');
-      no.onclick = () => requestEdit(() => { dataObj[key] = (dataObj[key]==='N'?null:'N'); renderTable(); renderHeat(); });
+      no.onclick = () => { dataObj[key] = (dataObj[key]==='N'?null:'N'); renderTable(); renderHeat(); dataChanged(); };
 
-      div.appendChild(yes); div.appendChild(no);
-      td.appendChild(div);
-      tr.appendChild(td);
+      div.appendChild(yes); div.appendChild(no); td.appendChild(div); tr.appendChild(td);
     }
 
     function renderPhotos(container, dataObj, sec, km) {
@@ -461,13 +468,16 @@
       (dataObj.photos||[]).forEach((ph, i) => {
          const img = document.createElement('img'); img.src = ph.data; img.className='photo-thumb';
          img.onclick = () => { document.getElementById('photoModalImg').src=ph.data; document.getElementById('photoModal').classList.remove('hidden'); };
-         img.oncontextmenu = (e) => { e.preventDefault(); requestEdit(()=>{ if(confirm('Apagar?')) { dataObj.photos.splice(i,1); renderTable(); } }); };
+         img.oncontextmenu = (e) => { 
+           e.preventDefault(); 
+           if(confirm('Apagar foto?')) { dataObj.photos.splice(i,1); renderTable(); dataChanged(); } 
+         };
          grid.appendChild(img);
       });
       if((dataObj.photos||[]).length < 3) {
          const add = document.createElement('label'); add.className='photo-empty'; add.innerHTML='+';
          const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.style.display='none';
-         inp.onchange = (e) => requestEdit(() => handlePhoto(e, dataObj));
+         inp.onchange = (e) => handlePhoto(e, dataObj);
          add.onclick = () => inp.click(); add.appendChild(inp); grid.appendChild(add);
       }
       container.appendChild(grid);
@@ -476,11 +486,62 @@
     async function handlePhoto(e, dataObj){ 
         const file = e.target.files[0]; if(!file)return;
         const reader = new FileReader();
-        reader.onload = (ev) => { dataObj.photos.push({data:ev.target.result, ts:new Date().toISOString()}); renderTable(); };
+        reader.onload = (ev) => { 
+          dataObj.photos.push({data:ev.target.result, ts:new Date().toISOString()}); 
+          renderTable(); 
+          dataChanged(); // AutoSave Trigger
+        };
         reader.readAsDataURL(file);
     }
 
-    // --- VISUAL HEATMAP MULTI-LINHA ---
+    function renderHeat() {
+      // (Lógica de Heatmap simplificada para economizar espaço, idêntica à anterior mas re-renderiza rápido)
+      const wrap = document.getElementById('heatWrap'); wrap.innerHTML='';
+      if(!state.kmStart) return;
+      const configs = getActiveConfigs();
+      if(configs.length === 0) { wrap.innerHTML = '<div style="padding:10px;text-align:center;color:#999">Nenhuma disciplina avaliada.</div>'; return; }
+      const kms = range(state.kmStart, state.kmEnd);
+      const frame = document.createElement('div'); frame.className='heat-grid';
+      
+      const hRow = document.createElement('div'); hRow.className='heat-row';
+      hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell heat-label', textContent:'Seção/Item'}));
+      kms.forEach(k=>hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:k,style:'font-weight:bold;background:#e2e8f0'})));
+      frame.appendChild(hRow);
+
+      getSecoes().forEach(s => {
+        configs.forEach(conf => {
+           const row = document.createElement('div'); row.className='heat-row';
+           const labelDiv = document.createElement('div'); 
+           labelDiv.className='heat-cell heat-label'; labelDiv.textContent = `${s} - ${conf.label}`; labelDiv.style.fontSize = '10px';
+           row.appendChild(labelDiv);
+
+           kms.forEach(k => {
+             ensure(s,k); const val = state.data[s][k][conf.key];
+             const cell = document.createElement('div'); cell.className='heat-cell';
+             if(val) {
+               let color = '#e0e0e0'; let txtColor = '#000';
+               if(conf.type === 'scale') {
+                  const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
+                  const found = opts.find(o => o.v === val);
+                  if(found) { color = '#'+found.hex; if(['worse','dead'].includes(found.c)) txtColor='#fff'; }
+               } else {
+                  if(val === 'S') { color = '#F44336'; txtColor='#fff'; }
+                  if(val === 'N') { color = '#8BC34A'; txtColor='#fff'; }
+               }
+               cell.style.background = color; cell.style.color = txtColor; cell.textContent = val;
+             }
+             row.appendChild(cell);
+           });
+           frame.appendChild(row);
+        });
+      });
+      wrap.appendChild(frame);
+    }
+
+    // --- UTILS ---
+    function range(a,b){ const r=[]; const s=a<=b?1:-1; for(let i=a;i!==b+s;i+=s)r.push(i); return r; }
+    function getSecoes(){ return state.selectedSecoes.length ? state.selectedSecoes : ["Sul","CC","Norte"]; }
+    function ensure(sec, km) { state.data[sec] ??= {}; state.data[sec][km] ??= { rocada:null, drenagem:null, cata:null, poda:null, entulho:null, defensa:null, dispositivo:null, photos:[], obs:'' }; }
     function getActiveConfigs() {
       const list = [];
       if(state.config.rocada !== 'none') list.push({ key:'rocada', label:'Vegetação', type:'scale' });
@@ -493,109 +554,38 @@
       return list;
     }
 
-    function renderHeat() {
-      const wrap = document.getElementById('heatWrap'); wrap.innerHTML='';
-      if(!state.kmStart) return;
-
-      const configs = getActiveConfigs();
-      if(configs.length === 0) { wrap.innerHTML = '<div style="padding:10px;text-align:center;color:#999">Nenhuma disciplina avaliada.</div>'; return; }
-
-      const kms = range(state.kmStart, state.kmEnd);
-      const frame = document.createElement('div'); frame.className='heat-grid';
-      
-      const hRow = document.createElement('div'); hRow.className='heat-row';
-      hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell heat-label', textContent:'Seção/Disciplina'}));
-      kms.forEach(k=>hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:k,style:'font-weight:bold;background:#e2e8f0'})));
-      frame.appendChild(hRow);
-
-      getSecoes().forEach(s => {
-        configs.forEach(conf => {
-           const row = document.createElement('div'); row.className='heat-row';
-           const labelDiv = document.createElement('div'); 
-           labelDiv.className='heat-cell heat-label';
-           labelDiv.textContent = `${s} - ${conf.label}`;
-           labelDiv.style.fontSize = '10px';
-           row.appendChild(labelDiv);
-
-           kms.forEach(k => {
-             ensure(s,k); const val = state.data[s][k][conf.key];
-             const cell = document.createElement('div'); cell.className='heat-cell';
-             
-             if(val) {
-               let color = '#e0e0e0'; let txtColor = '#000';
-               if(conf.type === 'scale') {
-                  const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : 
-                               (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
-                  const found = opts.find(o => o.v === val);
-                  if(found) { color = '#'+found.hex; if(['worse','dead'].includes(found.c)) txtColor='#fff'; }
-               } else {
-                  if(val === 'S') { color = '#F44336'; txtColor='#fff'; } // Problema
-                  if(val === 'N') { color = '#8BC34A'; txtColor='#fff'; } // Ok
-               }
-               cell.style.background = color; cell.style.color = txtColor; cell.textContent = val;
-             }
-             row.appendChild(cell);
-           });
-           frame.appendChild(row);
-        });
-      });
-      wrap.appendChild(frame);
-    }
-
-    // --- EXPORTAÇÃO XLSX ---
+    // --- EXPORTAÇÃO (Mantida a lógica anterior) ---
     async function exportXLSX() {
       if(!state.kmStart) { alert('Sem dados.'); return; }
+      triggerAutoSave(); // Garante o save antes de exportar
       const wb = new ExcelJS.Workbook();
       const kms = range(state.kmStart, state.kmEnd);
       const configs = getActiveConfigs();
 
-      // ABA 1: VISUAL
+      // ABA 1
       const wsRet = wb.addWorksheet('Retigrafico');
       wsRet.mergeCells('A1:B1'); wsRet.getCell('A1').value = 'Rodovia/UF'; wsRet.getCell('A1').font={bold:true};
       wsRet.getCell('C1').value = state.rodoviaUF || '';
       
-      const startRow = 3;
-      wsRet.getCell(`A${startRow}`).value = 'Disciplina Avaliada';
-      wsRet.getColumn(1).width = 30;
-
+      const startRow = 3; wsRet.getCell(`A${startRow}`).value = 'Disciplina Avaliada'; wsRet.getColumn(1).width = 30;
       let colIdx = 2;
       kms.forEach(km => {
-         const c = wsRet.getCell(startRow, colIdx); 
-         c.value = km;
-         c.alignment = { textRotation:90, horizontal:'center', vertical:'middle' }; 
-         c.font={bold:true}; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0E0E0'}};
-         c.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
-         wsRet.getColumn(colIdx).width = 4;
-         colIdx++;
+         const c = wsRet.getCell(startRow, colIdx); c.value = km; c.alignment = { textRotation:90, horizontal:'center', vertical:'middle' }; c.font={bold:true}; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0E0E0'}}; c.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}}; wsRet.getColumn(colIdx).width = 4; colIdx++;
       });
-
       let rowIdx = startRow + 1;
       getSecoes().forEach(s => {
          configs.forEach(conf => {
-            const labelCell = wsRet.getCell(rowIdx, 1);
-            labelCell.value = `${s} - ${conf.label}`;
-            labelCell.font = {bold:true, size:10};
-            labelCell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
-            
+            const labelCell = wsRet.getCell(rowIdx, 1); labelCell.value = `${s} - ${conf.label}`; labelCell.font = {bold:true, size:10}; labelCell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
             let cK = 2;
             kms.forEach(km => {
                const val = state.data[s]?.[km]?.[conf.key];
-               const cell = wsRet.getCell(rowIdx, cK);
-               cell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
-               cell.alignment={horizontal:'center', vertical:'middle'};
-               
+               const cell = wsRet.getCell(rowIdx, cK); cell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}}; cell.alignment={horizontal:'center', vertical:'middle'};
                if(val) {
-                  cell.value = val;
-                  let argb = 'FFEEEEEE';
+                  cell.value = val; let argb = 'FFEEEEEE';
                   if(conf.type === 'scale') {
-                     const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : 
-                                  (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
-                     const found = opts.find(o => o.v === val);
-                     if(found) argb = 'FF' + found.hex;
-                  } else {
-                     if(val === 'S') argb = 'FFF44336';
-                     if(val === 'N') argb = 'FF8BC34A';
-                  }
+                     const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
+                     const found = opts.find(o => o.v === val); if(found) argb = 'FF' + found.hex;
+                  } else { if(val === 'S') argb = 'FFF44336'; if(val === 'N') argb = 'FF8BC34A'; }
                   cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:argb} };
                }
                cK++;
@@ -604,7 +594,7 @@
          });
       });
 
-      // ABA 2: COLETA
+      // ABA 2
       const ws = wb.addWorksheet('Coleta');
       const headers = ["Rodovia", "KM", "Seção"];
       if(state.config.rocada !== 'none') headers.push("Vegetação");
@@ -616,15 +606,13 @@
       if(state.config.dispositivo) headers.push("Dispositivos");
       headers.push("Obs", "Foto 1", "Foto 2", "Foto 3");
       
-      const hRow = ws.addRow(headers);
-      hRow.eachCell(c => { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0B3D91'}}; c.font={color:{argb:'FFFFFFFF'},bold:true}; });
+      const hRow = ws.addRow(headers); hRow.eachCell(c => { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0B3D91'}}; c.font={color:{argb:'FFFFFFFF'},bold:true}; });
 
       let imgRow = 2;
       kms.forEach(km => {
         getSecoes().forEach(sec => {
           const d = state.data[sec]?.[km] || {};
           const rowData = [state.rodoviaUF, km, sec];
-          
           if(state.config.rocada !== 'none') rowData.push(d.rocada);
           if(state.config.drenagem) rowData.push(d.drenagem);
           if(state.config.cata) rowData.push(d.cata);
@@ -633,10 +621,7 @@
           if(state.config.defensa) rowData.push(d.defensa);
           if(state.config.dispositivo) rowData.push(d.dispositivo);
           rowData.push(d.obs, '', '', '');
-
-          const r = ws.addRow(rowData);
-          r.height = 70;
-          
+          const r = ws.addRow(rowData); r.height = 70;
           if(d.photos) {
             d.photos.forEach((ph, i) => {
               if(i>2 || !ph.data) return;
@@ -650,79 +635,57 @@
       });
 
       const buf = await wb.xlsx.writeBuffer();
-      saveAs(new Blob([buf]), `Retigrafico_${state.rodoviaUF || 'Multi'}.xlsx`);
+      saveAs(new Blob([buf]), `Retigrafico_${state.rodoviaUF || 'Autosave'}.xlsx`);
     }
 
-    // --- INTERFACE EVENTS ---
-    // Roçada Gangorra
-    document.getElementById('checkRocada3').onclick = (e) => handleRocadaCheck('1-3', e);
-    document.getElementById('checkRocada5').onclick = (e) => handleRocadaCheck('1-5', e);
+    // --- EVENT LISTENERS ---
+    document.getElementById('checkRocada3').onclick = (e) => { 
+        state.config.rocada = state.config.rocada === '1-3' ? 'none' : '1-3'; renderAll(); dataChanged(); 
+    };
+    document.getElementById('checkRocada5').onclick = (e) => { 
+        state.config.rocada = state.config.rocada === '1-5' ? 'none' : '1-5'; renderAll(); dataChanged(); 
+    };
 
-    function handleRocadaCheck(mode, e) {
-      if(isProtected) {
-        e.preventDefault();
-        requestEdit(() => { 
-          // Se já estava nesse modo e clicou, desmarca (vira none)
-          if(state.config.rocada === mode) {
-             state.config.rocada = 'none';
-          } else {
-             state.config.rocada = mode;
-          }
-          renderAll();
-        });
-      } else {
-          // Lógica direta
-          if(state.config.rocada === mode) {
-             state.config.rocada = 'none';
-          } else {
-             state.config.rocada = mode;
-          }
-          renderAll();
-      }
-    }
-
-    // Checkboxes normais
     ['checkDrenagem','checkCata','checkPoda','checkEntulho','checkDefensa','checkDispositivo'].forEach(id => {
        document.getElementById(id).onclick = (e) => {
          const key = id.replace('check','').toLowerCase();
-         if(isProtected) { e.preventDefault(); requestEdit(() => { state.config[key] = !state.config[key]; renderAll(); }); }
-         else { state.config[key] = document.getElementById(id).checked; renderAll(); }
+         state.config[key] = document.getElementById(id).checked; 
+         renderAll(); dataChanged(); 
        };
     });
 
-    document.getElementById('btnGerar').onclick = () => requestEdit(() => {
+    document.getElementById('btnGerar').onclick = () => {
         state.kmStart = parseInt(document.getElementById('kmStart').value)||0;
         state.kmEnd = parseInt(document.getElementById('kmEnd').value)||0;
         state.rodoviaUF = document.getElementById('rodoviaUF').value;
-        renderAll();
-    });
+        renderAll(); dataChanged();
+    };
     
-    // Handlers padrão
-    document.getElementById('btnSave').onclick = openSaveModal;
-    document.getElementById('btnExportXLSX').onclick = exportXLSX;
-    document.getElementById('btnReset').onclick = () => requestEdit(() => document.getElementById('resetModal').classList.remove('hidden'));
-    document.getElementById('btnConfirmReset').onclick = () => { state.data={}; renderAll(); document.getElementById('resetModal').classList.add('hidden'); };
-    function goBack() { window.location.href = 'index.html'; }
-    function openSaveModal() {
+    document.getElementById('btnSave').onclick = () => {
        document.getElementById('saveModal').classList.remove('hidden');
        const nameInp = document.getElementById('saveFileName');
        nameInp.value = state.metadata.name || `Retigráfico - ${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
        document.getElementById('btnConfirmSave').onclick = () => {
-         const name = nameInp.value;
+         state.metadata.name = nameInp.value;
          if(!currentId) currentId = 'file_'+Date.now();
-         state.metadata.name = name;
-         state.metadata.lastModified = new Date().toISOString();
-         localStorage.setItem(currentId, JSON.stringify(state));
-         let idx = JSON.parse(localStorage.getItem(INDEX_KEY) || '[]');
-         idx = idx.filter(x => x.id !== currentId);
-         idx.push({ id:currentId, name:name, date:state.metadata.lastModified, desc:`Km ${state.kmStart}-${state.kmEnd}` });
-         localStorage.setItem(INDEX_KEY, JSON.stringify(idx));
-         document.getElementById('fileLabel').innerText = name;
+         triggerAutoSave();
+         document.getElementById('fileLabel').innerText = nameInp.value;
          document.getElementById('saveModal').classList.add('hidden');
-         isProtected = true; disableInputs(true);
-         alert('Salvo!');
+         alert('Arquivo nomeado e salvo com segurança!');
        };
-    }
+    };
+
+    document.getElementById('btnExportXLSX').onclick = exportXLSX;
+    document.getElementById('btnReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
+    document.getElementById('btnConfirmReset').onclick = () => { 
+        state.data={}; 
+        currentId=null; // Reseta ID para virar um novo rascunho
+        renderAll(); 
+        document.getElementById('resetModal').classList.add('hidden'); 
+        triggerAutoSave(); 
+    };
+
+    function goBack() { window.location.href = 'index.html'; }
 
     init();
   </script>
