@@ -1,4 +1,5 @@
-const CACHE_NAME = 'retigrafico-final-v12'; // V12 para forçar atualização
+// ATUALIZANDO VERSÃO PARA V13 (Versão Zero Perdas)
+const CACHE_NAME = 'retigrafico-final-v13';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -6,7 +7,7 @@ const ASSETS_TO_CACHE = [
   './app.html',
   './manifest.webmanifest',
   './app-logo.png',
-  // Bibliotecas Externas
+  // Bibliotecas
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
   'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
   'https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js'
@@ -16,7 +17,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Instalando V12...');
+      console.log('[SW] Instalando V13 (Zero Perdas)...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -28,7 +29,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keyList.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW] Removendo cache antigo:', key);
+            console.log('[SW] Limpando cache antigo:', key);
             return caches.delete(key);
           }
         })
@@ -41,7 +42,6 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Ignora parâmetros (?id=...) para servir o arquivo HTML limpo
   if (url.origin === location.origin) {
     if (url.pathname.endsWith('app.html')) {
       event.respondWith(caches.match('./app.html'));
