@@ -223,7 +223,7 @@
 
     let currentId = null;
     let state = {
-      kmStart:0, kmEnd:0, rodoviaUF:'', selectedSecoes:null, 
+      kmStart:423, kmEnd:533, rodoviaUF:'BR-040 / MG', selectedSecoes:null, 
       data:{},
       config: { rocada: '1-3', drenagem: false, cata: false, poda: false, entulho: false, defensa: false, dispositivo: false, metragem: false },
       metadata: { created: new Date().toISOString() }
@@ -558,7 +558,11 @@
     // --- UTILS ---
     function range(a,b){ const r=[]; const s=a<=b?1:-1; for(let i=a;i!==b+s;i+=s)r.push(i); return r; }
     function getSecoes(){ 
-      if(state.selectedSecoes && state.selectedSecoes.length > 0) return state.selectedSecoes; 
+      if(state.selectedSecoes && state.selectedSecoes.length > 0) {
+        // Ordena as pistas selecionadas na ordem correta: Norte, CC, Sul, depois Leste, Oeste
+        const ordem = ["Norte", "CC", "Sul", "Leste", "Oeste"];
+        return state.selectedSecoes.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
+      }
       return ["Norte","CC","Sul"]; 
     }
     function ensure(sec, km) { state.data[sec] ??= {}; state.data[sec][km] ??= { rocada:null, drenagem:null, cata:null, poda:null, entulho:null, defensa:null, dispositivo:null, metragem:null, photos:[], obs:'' }; }
