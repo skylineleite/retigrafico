@@ -81,11 +81,11 @@
 
     .table-wrap{ max-height:600px; overflow:auto; border-radius:12px; border:1px solid #e2e8f0; margin-top:12px; }
     table{ border-collapse:separate; border-spacing:0; width:100%; font-size:14px; min-width:800px; }
-    th,td{ border-bottom:1px solid #e2e8f0; padding:10px; text-align:center; vertical-align:middle; }
+    th,td{ border-bottom:1px solid #e2e8f0; padding:6px 4px; text-align:center; vertical-align:middle; }
     th{ background:#f1f5f9; font-size:12px; text-transform:uppercase; color:#475569; position:sticky; top:0; z-index:2; font-weight:700; }
     td:first-child, td:nth-child(2) { text-align: left; } 
     
-    .chip{ padding:6px 4px; border-radius:6px; border:1px solid #cbd5e1; background:#f1f5f9; color:#334155; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; min-width:32px; transition:all 0.1s; margin:0 2px; }
+    .chip{ padding:4px 2px; border-radius:6px; border:1px solid #cbd5e1; background:#f1f5f9; color:#334155; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; min-width:28px; transition:all 0.1s; margin:0 1px; }
     .chip.active { transform:scale(1.1); border-width:2px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); z-index:1; }
     .chip.ok.active { background:var(--ok); border-color:#558b2f; color:#fff; }
     .chip.mid.active { background:var(--mid); border-color:#fbc02d; color:#000; }
@@ -95,14 +95,14 @@
     .chip.yes.active { background:var(--yes); border-color:#b71c1c; color:#fff; }
     .chip.no.active { background:var(--no); border-color:#33691e; color:#fff; }
 
-    .photo-thumb{ width:50px; height:50px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer; }
-    .photo-grid{ display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
-    .photo-empty{ width:50px; height:50px; border-radius:8px; border:2px dashed #cbd5e1; display:flex; align-items:center; justify-content:center; color:#64748b; cursor:pointer; background:#f8fafc; font-size:18px; }
+    .photo-thumb{ width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0; cursor:pointer; }
+    .photo-grid{ display:flex; gap:2px; flex-wrap:wrap; justify-content:center; }
+    .photo-empty{ width:40px; height:40px; border-radius:6px; border:2px dashed #cbd5e1; display:flex; align-items:center; justify-content:center; color:#64748b; cursor:pointer; background:#f8fafc; font-size:16px; }
 
     .heat-grid{ display:grid; gap:1px; margin-top:10px; overflow-x:auto; border-radius:8px; border:1px solid #e2e8f0; background:#e2e8f0; }
     .heat-row{ display:grid; grid-auto-flow:column; }
-    .heat-cell{ width:28px; height:28px; font-size:11px; display:flex; align-items:center; justify-content:center; border-right:1px solid #e2e8f0; }
-    .heat-label{ width:150px; justify-content:flex-start; padding-left:8px; font-weight:600; background:#fff; font-size:11px; }
+    .heat-cell{ width:24px; height:24px; font-size:10px; display:flex; align-items:center; justify-content:center; border-right:1px solid #e2e8f0; }
+    .heat-label{ width:150px; justify-content:flex-start; padding-left:8px; font-weight:600; background:#fff; font-size:10px; }
 
     .icon-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .icon-wa { width: 18px; height: 18px; fill: currentColor; }
@@ -150,6 +150,7 @@
           <label class="check-row"><input type="checkbox" id="checkEntulho"> <span>5. Recolhimento de Entulho</span></label>
           <label class="check-row"><input type="checkbox" id="checkDefensa"> <span>6. Defensas Danificadas</span></label>
           <label class="check-row"><input type="checkbox" id="checkDispositivo"> <span>7. Dispositivos Danificados</span></label>
+          <label class="check-row"><input type="checkbox" id="checkMetragem"> <span>8. Metragem por Km</span></label>
         </div>
       </div>
 
@@ -183,7 +184,6 @@
       <div id="heatWrap"></div>
 
       <div class="row btn-row" style="margin-top:20px; justify-content:flex-end; border-top:1px solid #e2e8f0; padding-top:16px">
-        <button id="btnSave" style="background:#64748b">Renomear / Salvar Como</button>
         <button id="btnExportXLSX" class="ghost">Baixar Relatório (XLSX)</button>
         <button id="btnShare" style="background:#25D366; color:#fff" class="icon-btn">
           <svg class="icon-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
@@ -225,7 +225,7 @@
     let state = {
       kmStart:0, kmEnd:0, rodoviaUF:'', selectedSecoes:[], 
       data:{},
-      config: { rocada: '1-3', drenagem: false, cata: false, poda: false, entulho: false, defensa: false, dispositivo: false },
+      config: { rocada: '1-3', drenagem: false, cata: false, poda: false, entulho: false, defensa: false, dispositivo: false, metragem: false },
       metadata: { created: new Date().toISOString() }
     };
 
@@ -303,7 +303,7 @@
           try {
             state = JSON.parse(raw);
             // Verifica integridade basica
-            if(!state.config) state.config = { rocada:'1-3', drenagem:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false };
+            if(!state.config) state.config = { rocada:'1-3', drenagem:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false, metragem:false };
             
             if (idToLoad === TEMP_KEY) {
               currentId = null; // Ainda é rascunho
@@ -336,6 +336,7 @@
       document.getElementById('checkEntulho').checked = !!state.config.entulho;
       document.getElementById('checkDefensa').checked = !!state.config.defensa;
       document.getElementById('checkDispositivo').checked = !!state.config.dispositivo;
+      document.getElementById('checkMetragem').checked = !!state.config.metragem;
 
       renderSentidosBox();
       renderTable();
@@ -344,7 +345,7 @@
 
     function renderSentidosBox() {
       const box = document.getElementById('sentidosBox'); box.innerHTML = '';
-      ["Sul","CC","Norte","Leste","Oeste"].forEach(s => {
+      ["Norte","CC","Sul","Leste","Oeste"].forEach(s => {
         const wrap = document.createElement('label');
         wrap.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border-radius:8px;border:1px solid #e2e8f0';
         const cb = document.createElement('input'); cb.type='checkbox'; cb.value=s;
@@ -379,6 +380,7 @@
       if(state.config.entulho) trH.innerHTML += `<th>Entulho</th>`;
       if(state.config.defensa) trH.innerHTML += `<th>Defensas</th>`;
       if(state.config.dispositivo) trH.innerHTML += `<th>Dispositivos</th>`;
+      if(state.config.metragem) trH.innerHTML += `<th>Metragem</th>`;
       trH.innerHTML += `<th>Fotos</th><th>Obs</th>`;
       thead.appendChild(trH);
 
@@ -415,6 +417,7 @@
           if(state.config.entulho) renderBinary(tr, rowData, 'entulho');
           if(state.config.defensa) renderBinary(tr, rowData, 'defensa');
           if(state.config.dispositivo) renderBinary(tr, rowData, 'dispositivo');
+          if(state.config.metragem) renderMetragem(tr, rowData, 'metragem');
 
           const tdF = document.createElement('td');
           renderPhotos(tdF, rowData, sec, km); tr.appendChild(tdF);
@@ -461,6 +464,18 @@
       no.onclick = () => { dataObj[key] = (dataObj[key]==='N'?null:'N'); renderTable(); renderHeat(); dataChanged(); };
 
       div.appendChild(yes); div.appendChild(no); td.appendChild(div); tr.appendChild(td);
+    }
+
+    function renderMetragem(tr, dataObj, key) {
+      const td = document.createElement('td');
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.value = dataObj[key] || '';
+      inp.placeholder = 'm';
+      inp.style.cssText = 'width:60px; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:13px;';
+      inp.onchange = () => { dataObj[key] = inp.value ? parseFloat(inp.value) : null; dataChanged(); };
+      td.appendChild(inp);
+      tr.appendChild(td);
     }
 
     function renderPhotos(container, dataObj, sec, km) {
@@ -524,9 +539,11 @@
                   const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
                   const found = opts.find(o => o.v === val);
                   if(found) { color = '#'+found.hex; if(['worse','dead'].includes(found.c)) txtColor='#fff'; }
-               } else {
+               } else if(conf.type === 'bin') {
                   if(val === 'S') { color = '#F44336'; txtColor='#fff'; }
                   if(val === 'N') { color = '#8BC34A'; txtColor='#fff'; }
+               } else if(conf.type === 'text') {
+                  color = '#0ea5e9'; txtColor='#fff';
                }
                cell.style.background = color; cell.style.color = txtColor; cell.textContent = val;
              }
@@ -540,8 +557,8 @@
 
     // --- UTILS ---
     function range(a,b){ const r=[]; const s=a<=b?1:-1; for(let i=a;i!==b+s;i+=s)r.push(i); return r; }
-    function getSecoes(){ return state.selectedSecoes.length ? state.selectedSecoes : ["Sul","CC","Norte"]; }
-    function ensure(sec, km) { state.data[sec] ??= {}; state.data[sec][km] ??= { rocada:null, drenagem:null, cata:null, poda:null, entulho:null, defensa:null, dispositivo:null, photos:[], obs:'' }; }
+    function getSecoes(){ return state.selectedSecoes.length ? state.selectedSecoes : ["Norte","CC","Sul"]; }
+    function ensure(sec, km) { state.data[sec] ??= {}; state.data[sec][km] ??= { rocada:null, drenagem:null, cata:null, poda:null, entulho:null, defensa:null, dispositivo:null, metragem:null, photos:[], obs:'' }; }
     function getActiveConfigs() {
       const list = [];
       if(state.config.rocada !== 'none') list.push({ key:'rocada', label:'Vegetação', type:'scale' });
@@ -551,18 +568,44 @@
       if(state.config.entulho) list.push({ key:'entulho', label:'Entulho', type:'bin' });
       if(state.config.defensa) list.push({ key:'defensa', label:'Defensas', type:'bin' });
       if(state.config.dispositivo) list.push({ key:'dispositivo', label:'Dispositivos', type:'bin' });
+      if(state.config.metragem) list.push({ key:'metragem', label:'Metragem', type:'text' });
       return list;
     }
 
-    // --- EXPORTAÇÃO (Mantida a lógica anterior) ---
+    // --- EXPORTAÇÃO (Melhorada com fotos e nome do arquivo) ---
     async function exportXLSX() {
       if(!state.kmStart) { alert('Sem dados.'); return; }
+      
+      // Primeiro, pede para salvar se ainda não foi salvo
+      if(!currentId) {
+        document.getElementById('saveModal').classList.remove('hidden');
+        const nameInp = document.getElementById('saveFileName');
+        nameInp.value = state.metadata.name || `Retigráfico - ${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
+        
+        return new Promise((resolve) => {
+          document.getElementById('btnConfirmSave').onclick = () => {
+            state.metadata.name = nameInp.value;
+            currentId = 'file_'+Date.now();
+            triggerAutoSave();
+            document.getElementById('fileLabel').innerText = nameInp.value;
+            document.getElementById('saveModal').classList.add('hidden');
+            
+            // Agora executa a exportação
+            performExport().then(resolve);
+          };
+        });
+      } else {
+        return performExport();
+      }
+    }
+
+    async function performExport() {
       triggerAutoSave(); // Garante o save antes de exportar
       const wb = new ExcelJS.Workbook();
       const kms = range(state.kmStart, state.kmEnd);
       const configs = getActiveConfigs();
 
-      // ABA 1
+      // ABA 1 - Retigrafico
       const wsRet = wb.addWorksheet('Retigrafico');
       wsRet.mergeCells('A1:B1'); wsRet.getCell('A1').value = 'Rodovia/UF'; wsRet.getCell('A1').font={bold:true};
       wsRet.getCell('C1').value = state.rodoviaUF || '';
@@ -585,7 +628,8 @@
                   if(conf.type === 'scale') {
                      const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
                      const found = opts.find(o => o.v === val); if(found) argb = 'FF' + found.hex;
-                  } else { if(val === 'S') argb = 'FFF44336'; if(val === 'N') argb = 'FF8BC34A'; }
+                  } else if(conf.type === 'bin') { if(val === 'S') argb = 'FFF44336'; if(val === 'N') argb = 'FF8BC34A'; }
+                  else if(conf.type === 'text') { argb = 'FF0ea5e9'; cell.font = {color:{argb:'FFFFFFFF'}}; }
                   cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:argb} };
                }
                cK++;
@@ -594,7 +638,7 @@
          });
       });
 
-      // ABA 2
+      // ABA 2 - Coleta com fotos inseridas
       const ws = wb.addWorksheet('Coleta');
       const headers = ["Rodovia", "KM", "Seção"];
       if(state.config.rocada !== 'none') headers.push("Vegetação");
@@ -604,6 +648,7 @@
       if(state.config.entulho) headers.push("Entulho");
       if(state.config.defensa) headers.push("Defensas");
       if(state.config.dispositivo) headers.push("Dispositivos");
+      if(state.config.metragem) headers.push("Metragem");
       headers.push("Obs", "Foto 1", "Foto 2", "Foto 3");
       
       const hRow = ws.addRow(headers); hRow.eachCell(c => { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0B3D91'}}; c.font={color:{argb:'FFFFFFFF'},bold:true}; });
@@ -620,22 +665,36 @@
           if(state.config.entulho) rowData.push(d.entulho);
           if(state.config.defensa) rowData.push(d.defensa);
           if(state.config.dispositivo) rowData.push(d.dispositivo);
+          if(state.config.metragem) rowData.push(d.metragem);
           rowData.push(d.obs, '', '', '');
           const r = ws.addRow(rowData); r.height = 70;
-          if(d.photos) {
+          
+          // Inserir fotos nas células corretas
+          if(d.photos && d.photos.length > 0) {
             d.photos.forEach((ph, i) => {
-              if(i>2 || !ph.data) return;
-              const imgId = wb.addImage({base64:ph.data.split(',')[1], extension:'jpeg'});
-              const colIdx = headers.length - 3 + i;
-              ws.addImage(imgId, { tl:{col:colIdx, row:imgRow-1}, ext:{width:90, height:60} });
+              if(i > 2 || !ph.data) return;
+              try {
+                const base64Data = ph.data.includes(',') ? ph.data.split(',')[1] : ph.data;
+                const imgId = wb.addImage({base64:base64Data, extension:'jpeg'});
+                const photoColIdx = headers.length - 3 + i; // Colunas de fotos começam 3 antes do fim
+                ws.addImage(imgId, { tl:{col:photoColIdx, row:imgRow-1}, ext:{width:60, height:50} });
+              } catch(err) {
+                console.error('Erro ao inserir foto:', err);
+              }
             });
           }
           imgRow++;
         });
       });
 
+      // Configurar largura das colunas de foto
+      ws.getColumn(headers.length - 2).width = 12;
+      ws.getColumn(headers.length - 1).width = 12;
+      ws.getColumn(headers.length).width = 12;
+
       const buf = await wb.xlsx.writeBuffer();
-      saveAs(new Blob([buf]), `Retigrafico_${state.rodoviaUF || 'Autosave'}.xlsx`);
+      const fileName = `${state.metadata.name || 'Retigrafico'}.xlsx`;
+      saveAs(new Blob([buf]), fileName);
     }
 
     // --- EVENT LISTENERS ---
@@ -646,7 +705,7 @@
         state.config.rocada = state.config.rocada === '1-5' ? 'none' : '1-5'; renderAll(); dataChanged(); 
     };
 
-    ['checkDrenagem','checkCata','checkPoda','checkEntulho','checkDefensa','checkDispositivo'].forEach(id => {
+    ['checkDrenagem','checkCata','checkPoda','checkEntulho','checkDefensa','checkDispositivo','checkMetragem'].forEach(id => {
        document.getElementById(id).onclick = (e) => {
          const key = id.replace('check','').toLowerCase();
          state.config[key] = document.getElementById(id).checked; 
@@ -661,20 +720,6 @@
         renderAll(); dataChanged();
     };
     
-    document.getElementById('btnSave').onclick = () => {
-       document.getElementById('saveModal').classList.remove('hidden');
-       const nameInp = document.getElementById('saveFileName');
-       nameInp.value = state.metadata.name || `Retigráfico - ${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
-       document.getElementById('btnConfirmSave').onclick = () => {
-         state.metadata.name = nameInp.value;
-         if(!currentId) currentId = 'file_'+Date.now();
-         triggerAutoSave();
-         document.getElementById('fileLabel').innerText = nameInp.value;
-         document.getElementById('saveModal').classList.add('hidden');
-         alert('Arquivo nomeado e salvo com segurança!');
-       };
-    };
-
     document.getElementById('btnExportXLSX').onclick = exportXLSX;
     document.getElementById('btnReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
     document.getElementById('btnConfirmReset').onclick = () => { 
