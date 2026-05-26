@@ -223,7 +223,7 @@
 
     let currentId = null;
     let state = {
-      kmStart:0, kmEnd:0, rodoviaUF:'', selectedSecoes:[], 
+      kmStart:0, kmEnd:0, rodoviaUF:'', selectedSecoes:null, 
       data:{},
       config: { rocada: '1-3', drenagem: false, cata: false, poda: false, entulho: false, defensa: false, dispositivo: false, metragem: false },
       metadata: { created: new Date().toISOString() }
@@ -369,7 +369,7 @@
       const thead = document.getElementById('tableHead');
       const tbody = document.getElementById('tbody');
       thead.innerHTML = ''; tbody.innerHTML = '';
-      if(!state.kmStart && !state.kmEnd) return;
+      if(!state.kmStart || !state.kmEnd) return;
 
       const trH = document.createElement('tr');
       trH.innerHTML = `<th>KM</th><th>Seção</th>`;
@@ -557,7 +557,10 @@
 
     // --- UTILS ---
     function range(a,b){ const r=[]; const s=a<=b?1:-1; for(let i=a;i!==b+s;i+=s)r.push(i); return r; }
-    function getSecoes(){ return state.selectedSecoes.length ? state.selectedSecoes : ["Norte","CC","Sul"]; }
+    function getSecoes(){ 
+      if(state.selectedSecoes && state.selectedSecoes.length > 0) return state.selectedSecoes; 
+      return ["Norte","CC","Sul"]; 
+    }
     function ensure(sec, km) { state.data[sec] ??= {}; state.data[sec][km] ??= { rocada:null, drenagem:null, cata:null, poda:null, entulho:null, defensa:null, dispositivo:null, metragem:null, photos:[], obs:'' }; }
     function getActiveConfigs() {
       const list = [];
