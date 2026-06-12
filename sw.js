@@ -1,5 +1,5 @@
 // ATUALIZANDO VERSÃO PARA V13 (Versão Zero Perdas)
-const CACHE_NAME = 'retigrafico-final-v13';
+const CACHE_NAME = 'retigrafico-final-v14';
 
 const ASSETS_TO_CACHE = [
   './',
