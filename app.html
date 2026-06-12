@@ -4,171 +4,91 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>Retigráfico - AutoSave</title>
-
   <link rel="manifest" href="manifest.webmanifest?v=7">
   <meta name="theme-color" content="#f8fafc">
-
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-
+  
   <style>
-    :root{
-      --ok:#8BC34A; --mid:#FFEB3B; --bad:#F44336;
-      --worse:#9C27B0; --dead:#212121;
-      --yes:#F44336; --no:#8BC34A;
-      --ink:#020617; --muted:#64748b; --brand:#0ea5e9;
-      --bg:#f8fafc; --card:#ffffff;
-      --radius:16px; --kmA:#f5fbff; --kmB:#ffffff;
-    }
-    *{box-sizing:border-box}
-    body{
-      font-family:system-ui,-apple-system,sans-serif;
-      margin:0; background:var(--bg); color:var(--ink);
-      padding-bottom: 40px;
-    }
+    :root{--ok:#8BC34A;--mid:#FFEB3B;--bad:#F44336;--worse:#9C27B0;--dead:#212121;--yes:#F44336;--no:#8BC34A;--ink:#020617;--muted:#64748b;--brand:#0ea5e9;--bg:#f8fafc;--card:#ffffff;--radius:16px;}
+    *{box-sizing:border-box} 
+    body{font-family:system-ui,sans-serif;margin:0;background:var(--bg);color:var(--ink);padding-bottom:40px;}
     .wrap{max-width:1200px;margin:18px auto;padding:0 12px}
-    
-    header{
-      display:flex; align-items:center; gap:12px;
-      margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;
-    }
-    .btn-back {
-      background:transparent; border:1px solid #cbd5e1; color:var(--muted);
-      padding:8px 12px; border-radius:10px; font-weight:600; font-size:14px;
-      cursor:pointer; display:flex; align-items:center; gap:4px;
-    }
-
-    /* INDICADOR DE SALVAMENTO */
-    #saveStatus {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      padding: 4px 8px; border-radius: 4px; display: none;
-    }
-    .status-saved { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .status-saving { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
-    .status-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-    .card{
-      background:var(--card); border-radius:var(--radius);
-      box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); padding:16px;
-      border:1px solid #e2e8f0; margin-bottom:12px;
-    }
-    .grid{display:grid;gap:10px}
-    .g-3{grid-template-columns:repeat(3,1fr)}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;}
+    .btn-back{background:transparent;border:1px solid #cbd5e1;color:var(--muted);padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer;}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);padding:16px;border:1px solid #e2e8f0;margin-bottom:12px;}
+    .grid{display:grid;gap:10px} .g-3{grid-template-columns:repeat(3,1fr)}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .row.center-chips { justify-content: center; width: 100%; }
-
     label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-    
-    input,button,select{ padding:12px; border-radius:12px; border:1px solid #cbd5e1; font-size:16px; outline:none; }
-    input:focus, select:focus{ border-color:var(--brand); }
-    input[type=number],input[type=text],select{ background:#fff; width:100%; }
-    input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--brand); cursor:pointer; }
-    
-    button{ background:var(--brand); color:#fff; border:none; cursor:pointer; font-weight:600; }
-    button.ghost{ background:#fff; color:var(--brand); border:1px solid var(--brand); }
-    button.warn{ background:#fff; color:#d97706; border:1px solid #d97706; }
-    button.danger{ background:#fee2e2; color:#ef4444; border:1px solid #ef4444; }
-    
-    .params-box { background: #f1f5f9; padding: 16px; border-radius: 12px; margin-top: 10px; }
-    .check-list { display: flex; flex-direction: column; gap: 12px; }
-    .check-row { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px 0; }
-    .check-row span { font-size: 15px; font-weight: 500; color: var(--ink); }
-
-    .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(4px); }
-    .modal-card { background:#fff; padding:24px; border-radius:16px; width:340px; max-width:90%; text-align:center; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); }
+    input,button,select{padding:12px;border-radius:12px;border:1px solid #cbd5e1;font-size:16px;outline:none;}
+    input[type=number],input[type=text],select{width:100%;}
+    input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand);cursor:pointer;}
+    button{background:var(--brand);color:#fff;border:none;cursor:pointer;font-weight:600;}
+    button.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand);}
+    button.warn{background:#fff;color:#d97706;border:1px solid #d97706;}
+    button.danger{background:#fee2e2;color:#ef4444;border:1px solid #ef4444;}
+    .params-box{background:#f1f5f9;padding:16px;border-radius:12px;margin-top:10px;}
+    .check-list{display:flex;flex-direction:column;gap:12px;}
+    .check-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding:4px 0;font-weight:500;}
+    .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:100;}
+    .modal-card{background:#fff;padding:24px;border-radius:16px;width:340px;text-align:center;}
     .hidden{display:none;}
-
-    .table-wrap{ max-height:600px; overflow:auto; border-radius:12px; border:1px solid #e2e8f0; margin-top:12px; }
-    table{ border-collapse:separate; border-spacing:0; width:100%; font-size:14px; min-width:800px; }
-    th,td{ border-bottom:1px solid #e2e8f0; padding:6px 4px; text-align:center; vertical-align:middle; }
-    th{ background:#f1f5f9; font-size:12px; text-transform:uppercase; color:#475569; position:sticky; top:0; z-index:2; font-weight:700; }
-    td:first-child, td:nth-child(2) { text-align: left; } 
-    
-    .chip{ padding:4px 2px; border-radius:6px; border:1px solid #cbd5e1; background:#f1f5f9; color:#334155; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; min-width:28px; transition:all 0.1s; margin:0 1px; }
-    .chip.active { transform:scale(1.1); border-width:2px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); z-index:1; }
-    .chip.ok.active { background:var(--ok); border-color:#558b2f; color:#fff; }
-    .chip.mid.active { background:var(--mid); border-color:#fbc02d; color:#000; }
-    .chip.bad.active { background:var(--bad); border-color:#c62828; color:#fff; }
-    .chip.worse.active { background:var(--worse); border-color:#7B1FA2; color:#fff; }
-    .chip.dead.active { background:var(--dead); border-color:#000; color:#fff; }
-    .chip.yes.active { background:var(--yes); border-color:#b71c1c; color:#fff; }
-    .chip.no.active { background:var(--no); border-color:#33691e; color:#fff; }
-
-    .photo-thumb{ width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0; cursor:pointer; }
-    .photo-grid{ display:flex; gap:2px; flex-wrap:wrap; justify-content:center; }
-    .photo-empty{ width:40px; height:40px; border-radius:6px; border:2px dashed #cbd5e1; display:flex; align-items:center; justify-content:center; color:#64748b; cursor:pointer; background:#f8fafc; font-size:16px; }
-
-    .heat-grid{ display:grid; gap:1px; margin-top:10px; overflow-x:auto; border-radius:8px; border:1px solid #e2e8f0; background:#e2e8f0; }
-    .heat-row{ display:grid; grid-auto-flow:column; }
-    .heat-cell{ width:24px; height:24px; font-size:10px; display:flex; align-items:center; justify-content:center; border-right:1px solid #e2e8f0; }
-    .heat-label{ width:150px; justify-content:flex-start; padding-left:8px; font-weight:600; background:#fff; font-size:10px; }
-
-    .icon-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .icon-wa { width: 18px; height: 18px; fill: currentColor; }
-    @media (max-width:768px){ .g-3{grid-template-columns:1fr} .btn-row{flex-direction:column;align-items:stretch} }
+    .table-wrap{max-height:600px;overflow:auto;border-radius:12px;border:1px solid #e2e8f0;margin-top:12px;}
+    table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;min-width:800px;}
+    th,td{border-bottom:1px solid #e2e8f0;padding:6px 4px;text-align:center;}
+    th{background:#f1f5f9;font-size:12px;position:sticky;top:0;z-index:2;font-weight:700;text-transform:uppercase;color:#475569;}
+    td:first-child{text-align:left;}
+    .chip{padding:4px 2px;border-radius:6px;border:1px solid #cbd5e1;background:#f1f5f9;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;min-width:28px;margin:0 1px;transition:all 0.1s;}
+    .chip.active{transform:scale(1.1);border-width:2px;}
+    .chip.ok.active{background:var(--ok);color:#fff;border-color:#558b2f;} 
+    .chip.mid.active{background:var(--mid);color:#000;border-color:#fbc02d;}
+    .chip.bad.active{background:var(--bad);color:#fff;border-color:#c62828;} 
+    .chip.worse.active{background:var(--worse);color:#fff;border-color:#7B1FA2;}
+    .chip.dead.active{background:var(--dead);color:#fff;border-color:#000;} 
+    .chip.yes.active{background:var(--yes);color:#fff;border-color:#b71c1c;}
+    .chip.no.active{background:var(--no);color:#fff;border-color:#33691e;}
+    @media (max-width:768px){ .g-3{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <button class="btn-back" onclick="goBack()"><span>&#8592;</span> Voltar</button>
-      <img src="app-logo.png" alt="R" style="width:36px;height:36px;border-radius:8px">
-      <div style="flex:1; overflow:hidden">
-        <h1 style="font-size:18px;margin:0;line-height:1.2">Retigráfico</h1>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div id="fileLabel" class="small" style="color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Novo Arquivo</div>
-          <div id="saveStatus" class="status-saved">Salvo</div>
-        </div>
+      <button class="btn-back" onclick="window.location.href='index.html'"><span>&#8592;</span> Voltar</button>
+      <div style="flex:1;overflow:hidden">
+        <h1 style="font-size:18px;margin:0">Retigráfico</h1>
+        <div style="font-size:12px;color:var(--muted)" id="saveStatus">Status: Sincronizado</div>
       </div>
     </header>
 
     <div class="card">
-      <div class="card-title" style="font-weight:700;margin-bottom:12px">
-        <span>1. Parâmetros & Escopo</span>
-      </div>
-      
+      <div style="font-weight:700;margin-bottom:12px">1. Parâmetros & Escopo</div>
       <div class="grid g-3">
         <div><label>Rodovia / UF</label><input id="rodoviaUF" type="text" placeholder="Ex.: BR-040 / MG"></div>
-        <div><label>KM Inicial</label><input id="kmStart" type="number" placeholder="Ex.: 256"></div>
-        <div><label>KM Final</label><input id="kmEnd" type="number" placeholder="Ex.: 260"></div>
+        <div><label>KM Inicial</label><input id="kmStart" type="number"></div>
+        <div><label>KM Final</label><input id="kmEnd" type="number"></div>
       </div>
-
+      
       <div class="params-box">
-        <label style="margin-bottom:16px;display:block;font-weight:800;font-size:14px;color:var(--brand);text-transform:uppercase;letter-spacing:1px;">Selecione as disciplinas que serão avaliadas:</label>
-        
-        <div class="check-list">
-          <label class="check-row">
-            <input type="checkbox" id="checkRocada3"> <span>1. Vegetação (Roçada 1 a 3)</span>
-          </label>
-          <label class="check-row" style="margin-left: 20px; font-size: 13px; color: var(--muted);">
-             <input type="checkbox" id="checkRocada5"> <span>(Ou Detalhada: 1 a 5)</span>
-          </label>
-          <label class="check-row"><input type="checkbox" id="checkDrenagem"> <span>2. Drenagens (1-3)</span></label>
-          <label class="check-row"><input type="checkbox" id="checkCata"> <span>3. Cata-Cata (Lixo)</span></label>
-          <label class="check-row"><input type="checkbox" id="checkPoda"> <span>4. Poda</span></label>
-          <label class="check-row"><input type="checkbox" id="checkEntulho"> <span>5. Recolhimento de Entulho</span></label>
-          <label class="check-row"><input type="checkbox" id="checkDefensa"> <span>6. Defensas Danificadas</span></label>
-          <label class="check-row"><input type="checkbox" id="checkDispositivo"> <span>7. Dispositivos Danificados</span></label>
-          <label class="check-row"><input type="checkbox" id="checkMetragem"> <span>8. Metragem por Km</span></label>
+        <div class="check-list" id="checkList">
+          <label class="check-row"><input type="checkbox" id="c_rocada3"> 1. Vegetação (1 a 3)</label>
+          <label class="check-row"><input type="checkbox" id="c_rocada5"> (Ou Detalhada: 1 a 5)</label>
+          <label class="check-row"><input type="checkbox" id="c_drenagem"> 2. Drenagens (1 a 4)</label>
+          <label class="check-row"><input type="checkbox" id="c_cata"> 3. Cata-Cata (Lixo)</label>
+          <label class="check-row"><input type="checkbox" id="c_poda"> 4. Poda</label>
+          <label class="check-row"><input type="checkbox" id="c_entulho"> 5. Recolhimento de Entulho</label>
+          <label class="check-row"><input type="checkbox" id="c_defensa"> 6. Defensas Danificadas</label>
+          <label class="check-row"><input type="checkbox" id="c_dispositivo"> 7. Dispositivos Danificados</label>
+          <label class="check-row"><input type="checkbox" id="c_metragem"> 8. Metragem por Km</label>
+          <label class="check-row"><input type="checkbox" id="c_capina"> 9. Capina e Refilamento</label>
         </div>
       </div>
-
-      <div style="margin-top:16px">
-        <label>Sentido / Pista</label>
-        <div id="sentidosBox" class="row" style="margin-top:8px; gap:12px"></div>
-      </div>
-
-      <div class="row btn-row" style="margin-top:16px">
+      <div class="row" style="margin-top:16px">
         <button id="btnGerar">Gerar Tabela</button>
-        <button id="btnReset" class="ghost warn">Limpar</button>
+        <button id="btnReset" class="ghost warn">Limpar Coleta</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title" style="font-weight:700;margin-bottom:12px">
-        <span>2. Coleta de Campo</span>
-      </div>
+      <div style="font-weight:700;margin-bottom:12px">2. Coleta de Campo</div>
       <div class="table-wrap">
         <table id="mainTable">
           <thead id="tableHead"></thead>
@@ -178,568 +98,166 @@
     </div>
 
     <div class="card">
-      <div class="card-title" style="font-weight:700;margin-bottom:12px">
-        <span>3. Visualização (Heatmap)</span>
-      </div>
-      <div id="heatWrap"></div>
-
-      <div class="row btn-row" style="margin-top:20px; justify-content:flex-end; border-top:1px solid #e2e8f0; padding-top:16px">
-        <button id="btnExportXLSX" class="ghost">Baixar Relatório (XLSX)</button>
-        <button id="btnShare" style="background:#25D366; color:#fff" class="icon-btn">
-          <svg class="icon-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-          Encaminhar
-        </button>
+      <div class="row" style="justify-content:flex-end">
+        <button id="btnExport" class="ghost">Baixar Relatório (XLSX)</button>
       </div>
     </div>
   </div>
 
-  <div id="photoModal" class="modal-back hidden">
-    <div style="text-align:center">
-      <img id="photoModalImg" src="" style="max-width:95vw;max-height:80vh;border-radius:8px;">
-      <div style="margin-top:10px"><button onclick="document.getElementById('photoModal').classList.add('hidden')" style="background:#fff;color:#000;border-radius:20px">Fechar</button></div>
-    </div>
-  </div>
-  <div id="saveModal" class="modal-back hidden">
-    <div class="modal-card">
-      <h3>Renomear Arquivo</h3>
-      <input id="saveFileName" type="text" style="width:100%;margin-bottom:16px">
-      <div class="icon-btn"><button id="btnConfirmSave" style="flex:1">Salvar Definitivo</button><button onclick="document.getElementById('saveModal').classList.add('hidden')" class="ghost">Cancelar</button></div>
-    </div>
-  </div>
   <div id="resetModal" class="modal-back hidden">
     <div class="modal-card">
-      <h3>⚠️ Limpar Tudo?</h3>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <button id="btnConfirmReset" class="danger">Apagar</button>
+      <h3>⚠️ Limpar dados da coleta?</h3>
+      <p style="font-size:13px; color:var(--muted)">Isso apagará apenas os registros de campo. O escopo e KMs serão mantidos.</p>
+      <div style="display:flex;flex-direction:column;gap:10px; margin-top:16px">
+        <button id="btnConfirmReset" class="danger">Limpar Tudo</button>
         <button onclick="document.getElementById('resetModal').classList.add('hidden')" class="ghost">Cancelar</button>
       </div>
     </div>
   </div>
 
   <script>
-    const INDEX_KEY = 'retigrafico_index_v1';
-    const TEMP_KEY = 'retigrafico_autosave_temp'; // Chave para rascunho sem nome
-    const LAST_OPEN_KEY = 'retigrafico_last_open_id'; // Chave para lembrar onde parou
+    // Configuração dos Níveis e Chips
+    const O_3 = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Cri',c:'bad'}];
+    const O_4 = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Rui',c:'worse'},{v:4,l:'Cri',c:'bad'}];
+    const O_5 = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Ate',c:'worse'},{v:4,l:'Rui',c:'bad'},{v:5,l:'Cri',c:'dead'}];
+    const O_YN= [{v:'S',l:'Sim',c:'yes'},{v:'N',l:'Não',c:'no'}];
 
-    let currentId = null;
+    // Matriz compacta das Disciplinas Ativas (Facilita renderização)
+    const COLS = [
+      {id:'rocada', label:'Vegetação', opts: s => s.config.rocada === '1-5' ? O_5 : O_3, act: s => s.config.rocada !== 'none'},
+      {id:'drenagem', label:'Drenagem', opts: () => O_4, act: s => s.config.drenagem},
+      {id:'cata', label:'Cata-Cata', opts: () => O_YN, act: s => s.config.cata},
+      {id:'poda', label:'Poda', opts: () => O_YN, act: s => s.config.poda},
+      {id:'entulho', label:'Entulho', opts: () => O_YN, act: s => s.config.entulho},
+      {id:'defensa', label:'Defensa', opts: () => O_YN, act: s => s.config.defensa},
+      {id:'dispositivo', label:'Dispositivo', opts: () => O_YN, act: s => s.config.dispositivo},
+      {id:'metragem', label:'Metragem', isInput: true, act: s => s.config.metragem},
+      {id:'capina', label:'Capina', opts: () => O_4, act: s => s.config.capina}
+    ];
+
+    // Lógica principal de Estado e Recuperação de URL
+    let currentId = new URLSearchParams(window.location.search).get('id');
+    const isNew = new URLSearchParams(window.location.search).get('new');
+    
     let state = {
-      kmStart:423, kmEnd:533, rodoviaUF:'BR-040 / MG', selectedSecoes:null, 
-      data:{},
-      config: { rocada: '1-3', drenagem: false, cata: false, poda: false, entulho: false, defensa: false, dispositivo: false, metragem: false },
-      metadata: { created: new Date().toISOString() }
+      kmStart:'', kmEnd:'', rodoviaUF:'', data:{},
+      config:{rocada:'none', drenagem:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false, metragem:false, capina:false}
     };
 
-    const OPTS_ROCADA_3 = [{v:1,l:'Bom',c:'ok',hex:'8BC34A'}, {v:2,l:'Reg',c:'mid',hex:'FFEB3B'}, {v:3,l:'Cri',c:'bad',hex:'F44336'}];
-    const OPTS_ROCADA_5 = [{v:1,l:'Bom',c:'ok',hex:'8BC34A'}, {v:2,l:'Reg',c:'mid',hex:'FFEB3B'}, {v:3,l:'Cri',c:'bad',hex:'F44336'},{v:4,l:'Pés',c:'worse',hex:'9C27B0'},{v:5,l:'Int',c:'dead',hex:'212121'}];
-    const OPTS_DRENAGEM = [{v:1,l:'Limpa',c:'ok',hex:'8BC34A'}, {v:2,l:'Suja',c:'mid',hex:'FFEB3B'}, {v:3,l:'Obs',c:'bad',hex:'F44336'}];
+    if(isNew) {
+      localStorage.removeItem('ret_temp_autosave');
+      currentId = null;
+    } else {
+      let saved = localStorage.getItem(currentId || 'ret_temp_autosave');
+      if(saved) state = JSON.parse(saved);
+    }
+
+    // Auto-Save de Segurança em qualquer momento e ao fechar a aba
+    function saveState() {
+      state.rodoviaUF = document.getElementById('rodoviaUF').value;
+      state.kmStart = document.getElementById('kmStart').value;
+      state.kmEnd = document.getElementById('kmEnd').value;
+      localStorage.setItem(currentId || 'ret_temp_autosave', JSON.stringify(state));
+      
+      const stEl = document.getElementById('saveStatus');
+      stEl.innerText = 'Salvo: ' + new Date().toLocaleTimeString();
+      stEl.style.color = 'var(--ok)';
+    }
     
-    // --- LÓGICA DE SALVAMENTO AUTOMÁTICO (NO EXCUSES) ---
-    function triggerAutoSave() {
-      // Identifica onde salvar: no ID atual ou no temporário
-      const targetId = currentId || TEMP_KEY;
+    window.addEventListener('beforeunload', saveState);
+
+    function initUI() {
+      document.getElementById('rodoviaUF').value = state.rodoviaUF;
+      document.getElementById('kmStart').value = state.kmStart;
+      document.getElementById('kmEnd').value = state.kmEnd;
       
-      // Atualiza timestamp
-      state.metadata.lastModified = new Date().toISOString();
+      document.getElementById('c_rocada3').checked = state.config.rocada === '1-3';
+      document.getElementById('c_rocada5').checked = state.config.rocada === '1-5';
       
-      // Feedback visual
-      const statusEl = document.getElementById('saveStatus');
-      statusEl.textContent = 'Salvando...';
-      statusEl.className = 'status-saving';
-      statusEl.style.display = 'block';
-
-      try {
-        // Gravação Síncrona no LocalStorage
-        localStorage.setItem(targetId, JSON.stringify(state));
-        
-        // Se for um arquivo nomeado, atualiza o índice também
-        if(currentId) updateIndexList(currentId, state.metadata.name);
-
-        // Lembra que este foi o último arquivo mexido
-        localStorage.setItem(LAST_OPEN_KEY, targetId);
-
-        // Sucesso
-        setTimeout(() => {
-          statusEl.textContent = 'Salvo';
-          statusEl.className = 'status-saved';
-        }, 500);
-
-      } catch(e) {
-        console.error(e);
-        statusEl.textContent = 'Erro ao Salvar!';
-        statusEl.className = 'status-error';
-        alert("ATENÇÃO: Memória do celular cheia! Pare de tirar fotos ou exporte agora. Seus dados recentes podem não ter sido salvos.");
-      }
-    }
-
-    // Função que encapsula qualquer mudança de dados
-    function dataChanged() {
-      triggerAutoSave();
-    }
-
-    function updateIndexList(id, name) {
-      let idx = [];
-      try { idx = JSON.parse(localStorage.getItem(INDEX_KEY) || '[]'); } catch(e){}
-      // Remove entrada antiga se existir
-      idx = idx.filter(x => x.id !== id);
-      // Adiciona atualizada no topo
-      idx.unshift({ id:id, name:name, date:state.metadata.lastModified, desc:`Km ${state.kmStart}-${state.kmEnd}` });
-      localStorage.setItem(INDEX_KEY, JSON.stringify(idx));
-    }
-
-    // --- INICIALIZAÇÃO ROBUSTA ---
-    function init() {
-      const p = new URLSearchParams(window.location.search);
-      let idToLoad = p.get('id');
-
-      // Se não veio ID na URL, tenta recuperar a última sessão (CRUCIAL PARA O BANCO)
-      if (!idToLoad) {
-        const last = localStorage.getItem(LAST_OPEN_KEY);
-        if(last) idToLoad = last;
-      }
-
-      if (idToLoad) {
-        const raw = localStorage.getItem(idToLoad);
-        if (raw) {
-          try {
-            state = JSON.parse(raw);
-            // Verifica integridade basica
-            if(!state.config) state.config = { rocada:'1-3', drenagem:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false, metragem:false };
-            
-            if (idToLoad === TEMP_KEY) {
-              currentId = null; // Ainda é rascunho
-              document.getElementById('fileLabel').innerText = 'Rascunho Automático (Não Salvo)';
-            } else {
-              currentId = idToLoad;
-              document.getElementById('fileLabel').innerText = state.metadata.name || 'Arquivo Recuperado';
-            }
-          } catch(e) {
-            console.log('Erro ao ler arquivo corrompido');
-          }
-        }
-      }
-      renderAll();
-    }
-
-    // --- RENDERIZAÇÃO ---
-    function renderAll() {
-      // Inputs
-      document.getElementById('rodoviaUF').value = state.rodoviaUF || '';
-      document.getElementById('kmStart').value = state.kmStart || '';
-      document.getElementById('kmEnd').value = state.kmEnd || '';
-      
-      // Configs
-      document.getElementById('checkRocada3').checked = (state.config.rocada === '1-3');
-      document.getElementById('checkRocada5').checked = (state.config.rocada === '1-5');
-      document.getElementById('checkDrenagem').checked = !!state.config.drenagem;
-      document.getElementById('checkCata').checked = !!state.config.cata;
-      document.getElementById('checkPoda').checked = !!state.config.poda;
-      document.getElementById('checkEntulho').checked = !!state.config.entulho;
-      document.getElementById('checkDefensa').checked = !!state.config.defensa;
-      document.getElementById('checkDispositivo').checked = !!state.config.dispositivo;
-      document.getElementById('checkMetragem').checked = !!state.config.metragem;
-
-      renderSentidosBox();
+      ['drenagem','cata','poda','entulho','defensa','dispositivo','metragem','capina'].forEach(k => {
+        document.getElementById('c_'+k).checked = state.config[k];
+      });
       renderTable();
-      renderHeat();
     }
 
-    function renderSentidosBox() {
-      const box = document.getElementById('sentidosBox'); box.innerHTML = '';
-      ["Norte","CC","Sul","Leste","Oeste"].forEach(s => {
-        const wrap = document.createElement('label');
-        wrap.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border-radius:8px;border:1px solid #e2e8f0';
-        const cb = document.createElement('input'); cb.type='checkbox'; cb.value=s;
-        if(getSecoes().includes(s)) cb.checked=true;
-        cb.onclick = () => { 
-          // Checkbox toggle logic
-          const checked = Array.from(document.querySelectorAll('#sentidosBox input:checked')).map(i=>i.value);
-          if(cb.checked && !checked.includes(s)) checked.push(s);
-          if(!cb.checked && checked.includes(s)) {
-             const idx = checked.indexOf(s); if(idx>-1) checked.splice(idx,1);
-          }
-          state.selectedSecoes = checked;
-          renderAll(); dataChanged(); 
-        };
-        wrap.append(cb, s); box.appendChild(wrap);
-      });
-    }
-
-    // --- TABELA ---
-    function renderTable() {
-      const thead = document.getElementById('tableHead');
-      const tbody = document.getElementById('tbody');
-      thead.innerHTML = ''; tbody.innerHTML = '';
-      if(!state.kmStart || !state.kmEnd) return;
-
-      const trH = document.createElement('tr');
-      trH.innerHTML = `<th>KM</th><th>Seção</th>`;
-      if(state.config.rocada !== 'none') trH.innerHTML += `<th>Vegetação</th>`;
-      if(state.config.drenagem) trH.innerHTML += `<th>Drenagem</th>`;
-      if(state.config.cata) trH.innerHTML += `<th>Cata-Cata</th>`;
-      if(state.config.poda) trH.innerHTML += `<th>Poda</th>`;
-      if(state.config.entulho) trH.innerHTML += `<th>Entulho</th>`;
-      if(state.config.defensa) trH.innerHTML += `<th>Defensas</th>`;
-      if(state.config.dispositivo) trH.innerHTML += `<th>Dispositivos</th>`;
-      if(state.config.metragem) trH.innerHTML += `<th>Metragem</th>`;
-      trH.innerHTML += `<th>Fotos</th><th>Obs</th>`;
-      thead.appendChild(trH);
-
-      const kms = range(state.kmStart, state.kmEnd);
-      const secs = getSecoes();
-
-      kms.forEach((km, idx) => {
-        const bg = idx%2===0 ? 'var(--kmA)' : 'var(--kmB)';
-        secs.forEach((sec, sIdx) => {
-          ensure(sec, km);
-          const rowData = state.data[sec][km];
-          const tr = document.createElement('tr');
-          tr.style.background = bg;
-
-          if(sIdx===0) {
-            const tdK = document.createElement('td');
-            tdK.rowSpan = secs.length; tdK.textContent = km;
-            tdK.style.cssText='font-weight:800;border-right:1px solid #e2e8f0;font-size:16px;vertical-align:middle;text-align:center';
-            tr.appendChild(tdK);
-          }
-          const tdS = document.createElement('td'); tdS.textContent = sec; tr.appendChild(tdS);
-
-          if(state.config.rocada !== 'none') {
-             const td = document.createElement('td');
-             const opts = state.config.rocada === '1-5' ? OPTS_ROCADA_5 : OPTS_ROCADA_3;
-             renderChips(td, rowData, 'rocada', opts); tr.appendChild(td);
-          }
-          if(state.config.drenagem) {
-             const td = document.createElement('td');
-             renderChips(td, rowData, 'drenagem', OPTS_DRENAGEM); tr.appendChild(td);
-          }
-          if(state.config.cata) renderBinary(tr, rowData, 'cata');
-          if(state.config.poda) renderBinary(tr, rowData, 'poda');
-          if(state.config.entulho) renderBinary(tr, rowData, 'entulho');
-          if(state.config.defensa) renderBinary(tr, rowData, 'defensa');
-          if(state.config.dispositivo) renderBinary(tr, rowData, 'dispositivo');
-          if(state.config.metragem) renderMetragem(tr, rowData, 'metragem');
-
-          const tdF = document.createElement('td');
-          renderPhotos(tdF, rowData, sec, km); tr.appendChild(tdF);
-
-          const tdO = document.createElement('td');
-          const imp = document.createElement('input'); 
-          imp.value = rowData.obs||''; imp.placeholder='...';
-          imp.onchange = () => { rowData.obs=imp.value; dataChanged(); };
-          tdO.appendChild(imp); tr.appendChild(tdO);
-
-          tbody.appendChild(tr);
-        });
-      });
-    }
-
-    function renderChips(container, dataObj, key, opts) {
-      const div = document.createElement('div');
-      div.className = 'row center-chips'; 
-      opts.forEach(o => {
-        const c = document.createElement('div');
-        c.className = `chip ${o.c}`;
-        if(dataObj[key] === o.v) c.classList.add('active');
-        c.textContent = o.v; 
-        c.onclick = () => {
-          dataObj[key] = (dataObj[key] === o.v ? null : o.v);
-          renderTable(); renderHeat(); dataChanged(); // AutoSave Trigger
-        };
-        div.appendChild(c);
-      });
-      container.appendChild(div);
-    }
-
-    function renderBinary(tr, dataObj, key) {
-      const td = document.createElement('td');
-      const div = document.createElement('div');
-      div.className = 'row center-chips'; 
+    // Listener Unificado para os Checkboxes
+    document.getElementById('checkList').addEventListener('change', e => {
+      const id = e.target.id.replace('c_','');
+      if(id === 'rocada3') state.config.rocada = e.target.checked ? '1-3' : 'none';
+      else if(id === 'rocada5') state.config.rocada = e.target.checked ? '1-5' : 'none';
+      else state.config[id] = e.target.checked;
       
-      const yes = document.createElement('div'); yes.className = 'chip yes'; yes.textContent = 'Sim';
-      if(dataObj[key] === 'S') yes.classList.add('active');
-      yes.onclick = () => { dataObj[key] = (dataObj[key]==='S'?null:'S'); renderTable(); renderHeat(); dataChanged(); };
-
-      const no = document.createElement('div'); no.className = 'chip no'; no.textContent = 'Não';
-      if(dataObj[key] === 'N') no.classList.add('active');
-      no.onclick = () => { dataObj[key] = (dataObj[key]==='N'?null:'N'); renderTable(); renderHeat(); dataChanged(); };
-
-      div.appendChild(yes); div.appendChild(no); td.appendChild(div); tr.appendChild(td);
-    }
-
-    function renderMetragem(tr, dataObj, key) {
-      const td = document.createElement('td');
-      const inp = document.createElement('input');
-      inp.type = 'number';
-      inp.value = dataObj[key] || '';
-      inp.placeholder = 'm';
-      inp.style.cssText = 'width:60px; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:13px;';
-      inp.onchange = () => { dataObj[key] = inp.value ? parseFloat(inp.value) : null; dataChanged(); };
-      td.appendChild(inp);
-      tr.appendChild(td);
-    }
-
-    function renderPhotos(container, dataObj, sec, km) {
-      const grid = document.createElement('div'); grid.className='photo-grid';
-      (dataObj.photos||[]).forEach((ph, i) => {
-         const img = document.createElement('img'); img.src = ph.data; img.className='photo-thumb';
-         img.onclick = () => { document.getElementById('photoModalImg').src=ph.data; document.getElementById('photoModal').classList.remove('hidden'); };
-         img.oncontextmenu = (e) => { 
-           e.preventDefault(); 
-           if(confirm('Apagar foto?')) { dataObj.photos.splice(i,1); renderTable(); dataChanged(); } 
-         };
-         grid.appendChild(img);
-      });
-      if((dataObj.photos||[]).length < 3) {
-         const add = document.createElement('label'); add.className='photo-empty'; add.innerHTML='+';
-         const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.style.display='none';
-         inp.onchange = (e) => handlePhoto(e, dataObj);
-         add.onclick = () => inp.click(); add.appendChild(inp); grid.appendChild(add);
-      }
-      container.appendChild(grid);
-    }
-    
-    async function handlePhoto(e, dataObj){ 
-        const file = e.target.files[0]; if(!file)return;
-        const reader = new FileReader();
-        reader.onload = (ev) => { 
-          dataObj.photos.push({data:ev.target.result, ts:new Date().toISOString()}); 
-          renderTable(); 
-          dataChanged(); // AutoSave Trigger
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function renderHeat() {
-      // (Lógica de Heatmap simplificada para economizar espaço, idêntica à anterior mas re-renderiza rápido)
-      const wrap = document.getElementById('heatWrap'); wrap.innerHTML='';
-      if(!state.kmStart) return;
-      const configs = getActiveConfigs();
-      if(configs.length === 0) { wrap.innerHTML = '<div style="padding:10px;text-align:center;color:#999">Nenhuma disciplina avaliada.</div>'; return; }
-      const kms = range(state.kmStart, state.kmEnd);
-      const frame = document.createElement('div'); frame.className='heat-grid';
+      if(id === 'rocada3' && e.target.checked) document.getElementById('c_rocada5').checked = false;
+      if(id === 'rocada5' && e.target.checked) document.getElementById('c_rocada3').checked = false;
       
-      const hRow = document.createElement('div'); hRow.className='heat-row';
-      hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell heat-label', textContent:'Seção/Item'}));
-      kms.forEach(k=>hRow.appendChild(Object.assign(document.createElement('div'),{className:'heat-cell',textContent:k,style:'font-weight:bold;background:#e2e8f0'})));
-      frame.appendChild(hRow);
-
-      getSecoes().forEach(s => {
-        configs.forEach(conf => {
-           const row = document.createElement('div'); row.className='heat-row';
-           const labelDiv = document.createElement('div'); 
-           labelDiv.className='heat-cell heat-label'; labelDiv.textContent = `${s} - ${conf.label}`; labelDiv.style.fontSize = '10px';
-           row.appendChild(labelDiv);
-
-           kms.forEach(k => {
-             ensure(s,k); const val = state.data[s][k][conf.key];
-             const cell = document.createElement('div'); cell.className='heat-cell';
-             if(val) {
-               let color = '#e0e0e0'; let txtColor = '#000';
-               if(conf.type === 'scale') {
-                  const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
-                  const found = opts.find(o => o.v === val);
-                  if(found) { color = '#'+found.hex; if(['worse','dead'].includes(found.c)) txtColor='#fff'; }
-               } else if(conf.type === 'bin') {
-                  if(val === 'S') { color = '#F44336'; txtColor='#fff'; }
-                  if(val === 'N') { color = '#8BC34A'; txtColor='#fff'; }
-               } else if(conf.type === 'text') {
-                  color = '#0ea5e9'; txtColor='#fff';
-               }
-               cell.style.background = color; cell.style.color = txtColor; cell.textContent = val;
-             }
-             row.appendChild(cell);
-           });
-           frame.appendChild(row);
-        });
-      });
-      wrap.appendChild(frame);
-    }
-
-    // --- UTILS ---
-    function range(a,b){ const r=[]; const s=a<=b?1:-1; for(let i=a;i!==b+s;i+=s)r.push(i); return r; }
-    function getSecoes(){ 
-      if(state.selectedSecoes && state.selectedSecoes.length > 0) {
-        // Ordena as pistas selecionadas na ordem correta: Norte, CC, Sul, depois Leste, Oeste
-        const ordem = ["Norte", "CC", "Sul", "Leste", "Oeste"];
-        return state.selectedSecoes.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
-      }
-      return ["Norte","CC","Sul"]; 
-    }
-    function ensure(sec, km) { state.data[sec] ??= {}; state.data[sec][km] ??= { rocada:null, drenagem:null, cata:null, poda:null, entulho:null, defensa:null, dispositivo:null, metragem:null, photos:[], obs:'' }; }
-    function getActiveConfigs() {
-      const list = [];
-      if(state.config.rocada !== 'none') list.push({ key:'rocada', label:'Vegetação', type:'scale' });
-      if(state.config.drenagem) list.push({ key:'drenagem', label:'Drenagens', type:'scale' });
-      if(state.config.cata) list.push({ key:'cata', label:'Cata-Cata', type:'bin' });
-      if(state.config.poda) list.push({ key:'poda', label:'Poda', type:'bin' });
-      if(state.config.entulho) list.push({ key:'entulho', label:'Entulho', type:'bin' });
-      if(state.config.defensa) list.push({ key:'defensa', label:'Defensas', type:'bin' });
-      if(state.config.dispositivo) list.push({ key:'dispositivo', label:'Dispositivos', type:'bin' });
-      if(state.config.metragem) list.push({ key:'metragem', label:'Metragem', type:'text' });
-      return list;
-    }
-
-    // --- EXPORTAÇÃO (Melhorada com fotos e nome do arquivo) ---
-    async function exportXLSX() {
-      if(!state.kmStart) { alert('Sem dados.'); return; }
-      
-      // Primeiro, pede para salvar se ainda não foi salvo
-      if(!currentId) {
-        document.getElementById('saveModal').classList.remove('hidden');
-        const nameInp = document.getElementById('saveFileName');
-        nameInp.value = state.metadata.name || `Retigráfico - ${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
-        
-        return new Promise((resolve) => {
-          document.getElementById('btnConfirmSave').onclick = () => {
-            state.metadata.name = nameInp.value;
-            currentId = 'file_'+Date.now();
-            triggerAutoSave();
-            document.getElementById('fileLabel').innerText = nameInp.value;
-            document.getElementById('saveModal').classList.add('hidden');
-            
-            // Agora executa a exportação
-            performExport().then(resolve);
-          };
-        });
-      } else {
-        return performExport();
-      }
-    }
-
-    async function performExport() {
-      triggerAutoSave(); // Garante o save antes de exportar
-      const wb = new ExcelJS.Workbook();
-      const kms = range(state.kmStart, state.kmEnd);
-      const configs = getActiveConfigs();
-
-      // ABA 1 - Retigrafico
-      const wsRet = wb.addWorksheet('Retigrafico');
-      wsRet.mergeCells('A1:B1'); wsRet.getCell('A1').value = 'Rodovia/UF'; wsRet.getCell('A1').font={bold:true};
-      wsRet.getCell('C1').value = state.rodoviaUF || '';
-      
-      const startRow = 3; wsRet.getCell(`A${startRow}`).value = 'Disciplina Avaliada'; wsRet.getColumn(1).width = 30;
-      let colIdx = 2;
-      kms.forEach(km => {
-         const c = wsRet.getCell(startRow, colIdx); c.value = km; c.alignment = { textRotation:90, horizontal:'center', vertical:'middle' }; c.font={bold:true}; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0E0E0'}}; c.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}}; wsRet.getColumn(colIdx).width = 4; colIdx++;
-      });
-      let rowIdx = startRow + 1;
-      getSecoes().forEach(s => {
-         configs.forEach(conf => {
-            const labelCell = wsRet.getCell(rowIdx, 1); labelCell.value = `${s} - ${conf.label}`; labelCell.font = {bold:true, size:10}; labelCell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
-            let cK = 2;
-            kms.forEach(km => {
-               const val = state.data[s]?.[km]?.[conf.key];
-               const cell = wsRet.getCell(rowIdx, cK); cell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}}; cell.alignment={horizontal:'center', vertical:'middle'};
-               if(val) {
-                  cell.value = val; let argb = 'FFEEEEEE';
-                  if(conf.type === 'scale') {
-                     const opts = (conf.key==='rocada' && state.config.rocada==='1-5') ? OPTS_ROCADA_5 : (conf.key==='rocada') ? OPTS_ROCADA_3 : OPTS_DRENAGEM;
-                     const found = opts.find(o => o.v === val); if(found) argb = 'FF' + found.hex;
-                  } else if(conf.type === 'bin') { if(val === 'S') argb = 'FFF44336'; if(val === 'N') argb = 'FF8BC34A'; }
-                  else if(conf.type === 'text') { argb = 'FF0ea5e9'; cell.font = {color:{argb:'FFFFFFFF'}}; }
-                  cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:argb} };
-               }
-               cK++;
-            });
-            rowIdx++;
-         });
-      });
-
-      // ABA 2 - Coleta com fotos inseridas
-      const ws = wb.addWorksheet('Coleta');
-      const headers = ["Rodovia", "KM", "Seção"];
-      if(state.config.rocada !== 'none') headers.push("Vegetação");
-      if(state.config.drenagem) headers.push("Drenagens");
-      if(state.config.cata) headers.push("Cata-Cata");
-      if(state.config.poda) headers.push("Poda");
-      if(state.config.entulho) headers.push("Entulho");
-      if(state.config.defensa) headers.push("Defensas");
-      if(state.config.dispositivo) headers.push("Dispositivos");
-      if(state.config.metragem) headers.push("Metragem");
-      headers.push("Obs", "Foto 1", "Foto 2", "Foto 3");
-      
-      const hRow = ws.addRow(headers); hRow.eachCell(c => { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0B3D91'}}; c.font={color:{argb:'FFFFFFFF'},bold:true}; });
-
-      let imgRow = 2;
-      kms.forEach(km => {
-        getSecoes().forEach(sec => {
-          const d = state.data[sec]?.[km] || {};
-          const rowData = [state.rodoviaUF, km, sec];
-          if(state.config.rocada !== 'none') rowData.push(d.rocada);
-          if(state.config.drenagem) rowData.push(d.drenagem);
-          if(state.config.cata) rowData.push(d.cata);
-          if(state.config.poda) rowData.push(d.poda);
-          if(state.config.entulho) rowData.push(d.entulho);
-          if(state.config.defensa) rowData.push(d.defensa);
-          if(state.config.dispositivo) rowData.push(d.dispositivo);
-          if(state.config.metragem) rowData.push(d.metragem);
-          rowData.push(d.obs, '', '', '');
-          const r = ws.addRow(rowData); r.height = 70;
-          
-          // Inserir fotos nas células corretas
-          if(d.photos && d.photos.length > 0) {
-            d.photos.forEach((ph, i) => {
-              if(i > 2 || !ph.data) return;
-              try {
-                const base64Data = ph.data.includes(',') ? ph.data.split(',')[1] : ph.data;
-                const imgId = wb.addImage({base64:base64Data, extension:'jpeg'});
-                const photoColIdx = headers.length - 3 + i; // Colunas de fotos começam 3 antes do fim
-                ws.addImage(imgId, { tl:{col:photoColIdx, row:imgRow-1}, ext:{width:60, height:50} });
-              } catch(err) {
-                console.error('Erro ao inserir foto:', err);
-              }
-            });
-          }
-          imgRow++;
-        });
-      });
-
-      // Configurar largura das colunas de foto
-      ws.getColumn(headers.length - 2).width = 12;
-      ws.getColumn(headers.length - 1).width = 12;
-      ws.getColumn(headers.length).width = 12;
-
-      const buf = await wb.xlsx.writeBuffer();
-      const fileName = `${state.metadata.name || 'Retigrafico'}.xlsx`;
-      saveAs(new Blob([buf]), fileName);
-    }
-
-    // --- EVENT LISTENERS ---
-    document.getElementById('checkRocada3').onclick = (e) => { 
-        state.config.rocada = state.config.rocada === '1-3' ? 'none' : '1-3'; renderAll(); dataChanged(); 
-    };
-    document.getElementById('checkRocada5').onclick = (e) => { 
-        state.config.rocada = state.config.rocada === '1-5' ? 'none' : '1-5'; renderAll(); dataChanged(); 
-    };
-
-    ['checkDrenagem','checkCata','checkPoda','checkEntulho','checkDefensa','checkDispositivo','checkMetragem'].forEach(id => {
-       document.getElementById(id).onclick = (e) => {
-         const key = id.replace('check','').toLowerCase();
-         state.config[key] = document.getElementById(id).checked; 
-         renderAll(); dataChanged(); 
-       };
+      saveState();
+      renderTable();
     });
 
-    document.getElementById('btnGerar').onclick = () => {
-        state.kmStart = parseInt(document.getElementById('kmStart').value)||0;
-        state.kmEnd = parseInt(document.getElementById('kmEnd').value)||0;
-        state.rodoviaUF = document.getElementById('rodoviaUF').value;
-        renderAll(); dataChanged();
-    };
-    
-    document.getElementById('btnExportXLSX').onclick = exportXLSX;
+    document.getElementById('btnGerar').onclick = () => { saveState(); renderTable(); };
     document.getElementById('btnReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
-    document.getElementById('btnConfirmReset').onclick = () => { 
-        state.data={}; 
-        currentId=null; // Reseta ID para virar um novo rascunho
-        renderAll(); 
-        document.getElementById('resetModal').classList.add('hidden'); 
-        triggerAutoSave(); 
+    
+    // Botão Limpar Esvazia Apenas o preenchimento de campo
+    document.getElementById('btnConfirmReset').onclick = () => {
+      state.data = {};
+      saveState();
+      renderTable();
+      document.getElementById('resetModal').classList.add('hidden');
     };
 
-    function goBack() { window.location.href = 'index.html'; }
+    function renderTable() {
+      const th = document.getElementById('tableHead');
+      const tb = document.getElementById('tbody');
+      
+      let start = parseInt(state.kmStart);
+      let end = parseInt(state.kmEnd);
+      
+      if(isNaN(start) || isNaN(end)) {
+        th.innerHTML = ''; 
+        tb.innerHTML = '<tr><td style="color:var(--muted)">Preencha os KMs e as disciplinas e clique em Gerar Tabela.</td></tr>';
+        return;
+      }
+      
+      // Auto inversão se iniciar com KM Maior e Final Menor
+      if(start > end) { let temp = start; start = end; end = temp; }
 
-    init();
+      let activeCols = COLS.filter(c => c.act(state));
+      th.innerHTML = `<tr><th>KM</th>${activeCols.map(c => `<th>${c.label}</th>`).join('')}</tr>`;
+
+      let html = '';
+      for(let km = start; km <= end; km++) {
+        html += `<tr><td><b>${km}</b></td>`;
+        activeCols.forEach(c => {
+          let val = state.data[`${km}_${c.id}`] || '';
+          if(c.isInput) {
+            html += `<td><input type="number" value="${val}" onchange="setCellData('${km}','${c.id}',this.value)" style="width:70px;padding:6px;text-align:center;"></td>`;
+          } else {
+            html += `<td>${c.opts(state).map(o => `<div class="chip ${o.c} ${val == o.v ? 'active' : ''}" onclick="setCellData('${km}','${c.id}','${o.v}')">${o.l}</div>`).join('')}</td>`;
+          }
+        });
+        html += `</tr>`;
+      }
+      tb.innerHTML = html;
+    }
+
+    window.setCellData = function(km, id, val) {
+      const key = `${km}_${id}`;
+      // Alternância do clique (toggle liga/desliga)
+      if(state.data[key] == val) delete state.data[key];
+      else state.data[key] = val;
+      
+      saveState();
+      renderTable();
+    }
+
+    document.getElementById('btnExport').onclick = () => {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.table_to_sheet(document.getElementById("mainTable"));
+      XLSX.utils.book_append_sheet(wb, ws, "Coleta");
+      XLSX.writeFile(wb, `Retigrafico_${state.rodoviaUF || 'SemNome'}.xlsx`);
+    };
+
+    initUI();
   </script>
 </body>
 </html>
