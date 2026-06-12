@@ -9,7 +9,11 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <style>
-    :root{--ok:#8BC34A;--mid:#FFEB3B;--bad:#F44336;--worse:#9C27B0;--dead:#212121;--yes:#F44336;--no:#8BC34A;--ink:#020617;--muted:#64748b;--brand:#0ea5e9;--bg:#f8fafc;--card:#ffffff;--radius:16px;}
+    :root{
+      --ok:#8BC34A; --mid:#FFEB3B; --warn:#f97316; --bad:#F44336; --worse:#9C27B0; --dead:#212121;
+      --yes:#F44336; --no:#8BC34A;
+      --ink:#020617; --muted:#64748b; --brand:#0ea5e9; --bg:#f8fafc; --card:#ffffff; --radius:16px;
+    }
     *{box-sizing:border-box} 
     body{font-family:system-ui,sans-serif;margin:0;background:var(--bg);color:var(--ink);padding-bottom:40px;}
     .wrap{max-width:1200px;margin:18px auto;padding:0 12px}
@@ -21,26 +25,28 @@
     label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
     input,button,select{padding:12px;border-radius:12px;border:1px solid #cbd5e1;font-size:16px;outline:none;}
     input[type=number],input[type=text],select{width:100%;}
-    input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand);cursor:pointer;}
+    input[type=checkbox], input[type=radio]{width:20px;height:20px;accent-color:var(--brand);cursor:pointer;}
     button{background:var(--brand);color:#fff;border:none;cursor:pointer;font-weight:600;}
     button.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand);}
     button.warn{background:#fff;color:#d97706;border:1px solid #d97706;}
     button.danger{background:#fee2e2;color:#ef4444;border:1px solid #ef4444;}
     .params-box{background:#f1f5f9;padding:16px;border-radius:12px;margin-top:10px;}
     .check-list{display:flex;flex-direction:column;gap:12px;}
-    .check-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding:4px 0;font-weight:500;}
+    .check-row{display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;font-weight:500;}
     .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:100;}
     .modal-card{background:#fff;padding:24px;border-radius:16px;width:340px;text-align:center;}
     .hidden{display:none;}
+    
     .table-wrap{max-height:600px;overflow:auto;border-radius:12px;border:1px solid #e2e8f0;margin-top:12px;}
-    table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;min-width:800px;}
-    th,td{border-bottom:1px solid #e2e8f0;padding:6px 4px;text-align:center;}
+    table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;white-space:nowrap;}
+    th,td{border-bottom:1px solid #e2e8f0;padding:6px 8px;text-align:center;}
     th{background:#f1f5f9;font-size:12px;position:sticky;top:0;z-index:2;font-weight:700;text-transform:uppercase;color:#475569;}
-    td:first-child{text-align:left;}
-    .chip{padding:4px 2px;border-radius:6px;border:1px solid #cbd5e1;background:#f1f5f9;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;min-width:28px;margin:0 1px;transition:all 0.1s;}
+    td:first-child{text-align:center;}
+    .chip{padding:4px 4px;border-radius:6px;border:1px solid #cbd5e1;background:#f1f5f9;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;min-width:30px;justify-content:center;margin:0 1px;transition:all 0.1s;}
     .chip.active{transform:scale(1.1);border-width:2px;}
     .chip.ok.active{background:var(--ok);color:#fff;border-color:#558b2f;} 
     .chip.mid.active{background:var(--mid);color:#000;border-color:#fbc02d;}
+    .chip.warn.active{background:var(--warn);color:#fff;border-color:#c2410c;}
     .chip.bad.active{background:var(--bad);color:#fff;border-color:#c62828;} 
     .chip.worse.active{background:var(--worse);color:#fff;border-color:#7B1FA2;}
     .chip.dead.active{background:var(--dead);color:#fff;border-color:#000;} 
@@ -53,6 +59,7 @@
   <div class="wrap">
     <header>
       <button class="btn-back" onclick="window.location.href='index.html'"><span>&#8592;</span> Voltar</button>
+      <img src="app-logo.png" alt="Logo" style="width:36px;height:36px;border-radius:8px">
       <div style="flex:1;overflow:hidden">
         <h1 style="font-size:18px;margin:0">Retigráfico</h1>
         <div style="font-size:12px;color:var(--muted)" id="saveStatus">Status: Sincronizado</div>
@@ -67,18 +74,31 @@
         <div><label>KM Final</label><input id="kmEnd" type="number"></div>
       </div>
       
+      <div style="margin-top:16px">
+        <label style="font-weight:600; color:var(--ink); font-size:14px;">Selecione as Pistas (Mínimo 1)</label>
+        <div class="row" id="pistasWrap" style="margin-top:8px;"></div>
+      </div>
+
       <div class="params-box">
         <div class="check-list" id="checkList">
-          <label class="check-row"><input type="checkbox" id="c_rocada3"> 1. Vegetação (1 a 3)</label>
-          <label class="check-row"><input type="checkbox" id="c_rocada5"> (Ou Detalhada: 1 a 5)</label>
+          <!-- Vegetação Agrupada -->
+          <div style="margin-bottom:6px">
+            <span style="font-weight:600; font-size:14px; color:var(--ink);">1. Vegetação</span>
+            <div style="margin-left:24px; margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+               <label class="check-row"><input type="radio" name="rocada" id="r_rocada3"> Simples - 1 a 3</label>
+               <label class="check-row"><input type="radio" name="rocada" id="r_rocada5"> Detalhado - 1 a 5</label>
+               <label class="check-row"><input type="radio" name="rocada" id="r_rocada0"> Nenhuma</label>
+            </div>
+          </div>
+          
           <label class="check-row"><input type="checkbox" id="c_drenagem"> 2. Drenagens (1 a 4)</label>
-          <label class="check-row"><input type="checkbox" id="c_cata"> 3. Cata-Cata (Lixo)</label>
-          <label class="check-row"><input type="checkbox" id="c_poda"> 4. Poda</label>
-          <label class="check-row"><input type="checkbox" id="c_entulho"> 5. Recolhimento de Entulho</label>
-          <label class="check-row"><input type="checkbox" id="c_defensa"> 6. Defensas Danificadas</label>
-          <label class="check-row"><input type="checkbox" id="c_dispositivo"> 7. Dispositivos Danificados</label>
-          <label class="check-row"><input type="checkbox" id="c_metragem"> 8. Metragem por Km</label>
-          <label class="check-row"><input type="checkbox" id="c_capina"> 9. Capina e Refilamento</label>
+          <label class="check-row"><input type="checkbox" id="c_capina"> 3. Capina e Refilamento (1 a 4)</label>
+          <label class="check-row"><input type="checkbox" id="c_cata"> 4. Cata-Cata (Lixo)</label>
+          <label class="check-row"><input type="checkbox" id="c_poda"> 5. Poda</label>
+          <label class="check-row"><input type="checkbox" id="c_entulho"> 6. Recolhimento de Entulho</label>
+          <label class="check-row"><input type="checkbox" id="c_defensa"> 7. Defensas Danificadas</label>
+          <label class="check-row"><input type="checkbox" id="c_dispositivo"> 8. Dispositivos Danificados</label>
+          <label class="check-row"><input type="checkbox" id="c_metragem"> 9. Metragem por Km</label>
         </div>
       </div>
       <div class="row" style="margin-top:16px">
@@ -98,9 +118,11 @@
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:flex-end">
-        <button id="btnExport" class="ghost">Baixar Relatório (XLSX)</button>
+      <div class="row" style="justify-content:flex-end; margin-bottom: 4px;">
+        <button id="btnSaveFile" class="ghost" style="border-color:#25D366; color:#166534; background:#dcfce7;">💾 Salvar Arquivo</button>
+        <button id="btnExport" class="ghost" style="background:#fff; color:var(--brand); border-color:var(--brand);">Baixar Relatório (XLSX)</button>
       </div>
+      <div id="saveConfirmText" style="text-align:right; font-size:12px; font-weight:600; color:var(--muted); margin-top:8px;"></div>
     </div>
   </div>
 
@@ -116,32 +138,33 @@
   </div>
 
   <script>
-    // Configuração dos Níveis e Chips
-    const O_3 = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Cri',c:'bad'}];
-    const O_4 = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Rui',c:'worse'},{v:4,l:'Cri',c:'bad'}];
-    const O_5 = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Ate',c:'worse'},{v:4,l:'Rui',c:'bad'},{v:5,l:'Cri',c:'dead'}];
+    const PISTAS_ORDER = ["Norte", "C.C", "Sul", "Leste", "Oeste"];
+
+    // Arrays de Opções com cores invertidas para Limpeza (Crítico = roxo) e Numerais para Vegetação
+    const O_VEG_3 = [{v:1,l:'1',c:'ok'},{v:2,l:'2',c:'mid'},{v:3,l:'3',c:'bad'}];
+    const O_VEG_5 = [{v:1,l:'1',c:'ok'},{v:2,l:'2',c:'mid'},{v:3,l:'3',c:'warn'},{v:4,l:'4',c:'bad'},{v:5,l:'5',c:'worse'}];
+    const O_LIMP = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Rui',c:'bad'},{v:4,l:'Cri',c:'worse'}]; // Roxo no pior
     const O_YN= [{v:'S',l:'Sim',c:'yes'},{v:'N',l:'Não',c:'no'}];
 
-    // Matriz compacta das Disciplinas Ativas (Facilita renderização)
     const COLS = [
-      {id:'rocada', label:'Vegetação', opts: s => s.config.rocada === '1-5' ? O_5 : O_3, act: s => s.config.rocada !== 'none'},
-      {id:'drenagem', label:'Drenagem', opts: () => O_4, act: s => s.config.drenagem},
+      {id:'rocada', label:'Vegetação', opts: s => s.config.rocada === '1-5' ? O_VEG_5 : O_VEG_3, act: s => s.config.rocada !== 'none'},
+      {id:'drenagem', label:'Drenagem', opts: () => O_LIMP, act: s => s.config.drenagem},
+      {id:'capina', label:'Capina', opts: () => O_LIMP, act: s => s.config.capina},
       {id:'cata', label:'Cata-Cata', opts: () => O_YN, act: s => s.config.cata},
       {id:'poda', label:'Poda', opts: () => O_YN, act: s => s.config.poda},
       {id:'entulho', label:'Entulho', opts: () => O_YN, act: s => s.config.entulho},
       {id:'defensa', label:'Defensa', opts: () => O_YN, act: s => s.config.defensa},
       {id:'dispositivo', label:'Dispositivo', opts: () => O_YN, act: s => s.config.dispositivo},
-      {id:'metragem', label:'Metragem', isInput: true, act: s => s.config.metragem},
-      {id:'capina', label:'Capina', opts: () => O_4, act: s => s.config.capina}
+      {id:'metragem', label:'Metragem', isInput: true, act: s => s.config.metragem}
     ];
 
-    // Lógica principal de Estado e Recuperação de URL
     let currentId = new URLSearchParams(window.location.search).get('id');
     const isNew = new URLSearchParams(window.location.search).get('new');
     
     let state = {
-      kmStart:'', kmEnd:'', rodoviaUF:'', data:{},
-      config:{rocada:'none', drenagem:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false, metragem:false, capina:false}
+      kmStart:'', kmEnd:'', rodoviaUF:'', data:{}, metadata:{},
+      selectedSecoes: ["Norte", "C.C", "Sul"],
+      config:{rocada:'none', drenagem:false, capina:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false, metragem:false}
     };
 
     if(isNew) {
@@ -149,19 +172,26 @@
       currentId = null;
     } else {
       let saved = localStorage.getItem(currentId || 'ret_temp_autosave');
-      if(saved) state = JSON.parse(saved);
+      if(saved) state = Object.assign(state, JSON.parse(saved));
     }
 
-    // Auto-Save de Segurança em qualquer momento e ao fechar a aba
     function saveState() {
       state.rodoviaUF = document.getElementById('rodoviaUF').value;
       state.kmStart = document.getElementById('kmStart').value;
       state.kmEnd = document.getElementById('kmEnd').value;
       localStorage.setItem(currentId || 'ret_temp_autosave', JSON.stringify(state));
       
-      const stEl = document.getElementById('saveStatus');
-      stEl.innerText = 'Salvo: ' + new Date().toLocaleTimeString();
-      stEl.style.color = 'var(--ok)';
+      // Atualiza index silenciosamente se já tiver sido nomeado
+      if(currentId && state.metadata && state.metadata.name) {
+          let list = JSON.parse(localStorage.getItem('retigrafico_index_v1') || '[]');
+          let item = list.find(x => x.id === currentId);
+          if(item) {
+              item.rodovia = state.rodoviaUF; item.kmStart = state.kmStart; item.kmEnd = state.kmEnd;
+              localStorage.setItem('retigrafico_index_v1', JSON.stringify(list));
+          }
+      }
+
+      document.getElementById('saveStatus').innerText = 'Sincronizado às ' + new Date().toLocaleTimeString().slice(0,5);
     }
     
     window.addEventListener('beforeunload', saveState);
@@ -171,91 +201,187 @@
       document.getElementById('kmStart').value = state.kmStart;
       document.getElementById('kmEnd').value = state.kmEnd;
       
-      document.getElementById('c_rocada3').checked = state.config.rocada === '1-3';
-      document.getElementById('c_rocada5').checked = state.config.rocada === '1-5';
+      // Init Vegetação Radios
+      if(state.config.rocada === '1-3') document.getElementById('r_rocada3').checked = true;
+      else if(state.config.rocada === '1-5') document.getElementById('r_rocada5').checked = true;
+      else document.getElementById('r_rocada0').checked = true;
       
-      ['drenagem','cata','poda','entulho','defensa','dispositivo','metragem','capina'].forEach(k => {
+      // Init Checkboxes
+      ['drenagem','capina','cata','poda','entulho','defensa','dispositivo','metragem'].forEach(k => {
         document.getElementById('c_'+k).checked = state.config[k];
       });
+
+      // Render Pistas
+      const pWrap = document.getElementById('pistasWrap');
+      PISTAS_ORDER.forEach(p => {
+          const lbl = document.createElement('label');
+          lbl.className = 'check-row'; lbl.style.background = '#fff'; lbl.style.padding = '6px 12px'; lbl.style.borderRadius = '8px'; lbl.style.border = '1px solid #cbd5e1';
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = p;
+          cb.checked = state.selectedSecoes.includes(p);
+          cb.onchange = (e) => {
+              if(!e.target.checked && state.selectedSecoes.length === 1) {
+                  e.target.checked = true; alert("É obrigatório manter pelo menos uma pista selecionada."); return;
+              }
+              if(e.target.checked) state.selectedSecoes.push(p);
+              else state.selectedSecoes = state.selectedSecoes.filter(x => x !== p);
+              state.selectedSecoes.sort((a,b) => PISTAS_ORDER.indexOf(a) - PISTAS_ORDER.indexOf(b));
+              saveState(); renderTable();
+          }
+          lbl.appendChild(cb); lbl.appendChild(document.createTextNode(' ' + p)); pWrap.appendChild(lbl);
+      });
+
       renderTable();
     }
 
-    // Listener Unificado para os Checkboxes
-    document.getElementById('checkList').addEventListener('change', e => {
-      const id = e.target.id.replace('c_','');
-      if(id === 'rocada3') state.config.rocada = e.target.checked ? '1-3' : 'none';
-      else if(id === 'rocada5') state.config.rocada = e.target.checked ? '1-5' : 'none';
-      else state.config[id] = e.target.checked;
-      
-      if(id === 'rocada3' && e.target.checked) document.getElementById('c_rocada5').checked = false;
-      if(id === 'rocada5' && e.target.checked) document.getElementById('c_rocada3').checked = false;
-      
-      saveState();
-      renderTable();
+    // Listener de Vegetação
+    document.querySelectorAll('input[name="rocada"]').forEach(r => {
+        r.addEventListener('change', e => {
+            if(e.target.id === 'r_rocada3') state.config.rocada = '1-3';
+            else if(e.target.id === 'r_rocada5') state.config.rocada = '1-5';
+            else state.config.rocada = 'none';
+            saveState(); renderTable();
+        });
+    });
+
+    // Listener demais Checkboxes
+    document.querySelectorAll('#checkList input[type="checkbox"]').forEach(c => {
+       c.addEventListener('change', e => {
+          const id = e.target.id.replace('c_','');
+          state.config[id] = e.target.checked;
+          saveState(); renderTable();
+       });
     });
 
     document.getElementById('btnGerar').onclick = () => { saveState(); renderTable(); };
     document.getElementById('btnReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
-    
-    // Botão Limpar Esvazia Apenas o preenchimento de campo
     document.getElementById('btnConfirmReset').onclick = () => {
-      state.data = {};
-      saveState();
-      renderTable();
-      document.getElementById('resetModal').classList.add('hidden');
+      state.data = {}; saveState(); renderTable(); document.getElementById('resetModal').classList.add('hidden');
     };
 
     function renderTable() {
       const th = document.getElementById('tableHead');
       const tb = document.getElementById('tbody');
       
-      let start = parseInt(state.kmStart);
-      let end = parseInt(state.kmEnd);
-      
+      let start = parseInt(state.kmStart); let end = parseInt(state.kmEnd);
       if(isNaN(start) || isNaN(end)) {
-        th.innerHTML = ''; 
-        tb.innerHTML = '<tr><td style="color:var(--muted)">Preencha os KMs e as disciplinas e clique em Gerar Tabela.</td></tr>';
-        return;
+        th.innerHTML = ''; tb.innerHTML = '<tr><td style="color:var(--muted); padding:20px;">Preencha os KMs e as disciplinas e clique em Gerar Tabela.</td></tr>'; return;
       }
-      
-      // Auto inversão se iniciar com KM Maior e Final Menor
       if(start > end) { let temp = start; start = end; end = temp; }
 
       let activeCols = COLS.filter(c => c.act(state));
-      th.innerHTML = `<tr><th>KM</th>${activeCols.map(c => `<th>${c.label}</th>`).join('')}</tr>`;
+      th.innerHTML = `<tr>
+        <th style="width:40px">KM</th>
+        <th style="width:50px">Seção</th>
+        ${activeCols.map(c => `<th>${c.label}</th>`).join('')}
+        <th style="width:100%; min-width:120px;">Obs</th>
+      </tr>`;
 
       let html = '';
       for(let km = start; km <= end; km++) {
-        html += `<tr><td><b>${km}</b></td>`;
-        activeCols.forEach(c => {
-          let val = state.data[`${km}_${c.id}`] || '';
-          if(c.isInput) {
-            html += `<td><input type="number" value="${val}" onchange="setCellData('${km}','${c.id}',this.value)" style="width:70px;padding:6px;text-align:center;"></td>`;
-          } else {
-            html += `<td>${c.opts(state).map(o => `<div class="chip ${o.c} ${val == o.v ? 'active' : ''}" onclick="setCellData('${km}','${c.id}','${o.v}')">${o.l}</div>`).join('')}</td>`;
-          }
+        state.selectedSecoes.forEach((sec, idx) => {
+           html += `<tr>`;
+           if(idx === 0) html += `<td rowspan="${state.selectedSecoes.length}" style="background:var(--bg); border-right:1px solid #e2e8f0;"><b>${km}</b></td>`;
+           html += `<td style="font-weight:600; font-size:12px; color:var(--muted)">${sec}</td>`;
+           
+           activeCols.forEach(c => {
+              let val = state.data[`${km}_${sec}_${c.id}`] || '';
+              if(c.isInput) {
+                html += `<td><input type="number" value="${val}" onchange="setCellData('${km}','${sec}','${c.id}',this.value)" style="width:70px;padding:6px;text-align:center;"></td>`;
+              } else {
+                html += `<td><div style="display:flex; flex-wrap:wrap; gap:2px; justify-content:center;">${c.opts(state).map(o => `<div class="chip ${o.c} ${val == o.v ? 'active' : ''}" onclick="setCellData('${km}','${sec}','${c.id}','${o.v}')">${o.l}</div>`).join('')}</div></td>`;
+              }
+           });
+           
+           let obsVal = state.data[`${km}_${sec}_obs`] || '';
+           html += `<td><input type="text" placeholder="..." value="${obsVal}" onchange="setCellData('${km}','${sec}','obs',this.value)" style="padding:8px; font-size:13px; width:100%;"></td>`;
+           html += `</tr>`;
         });
-        html += `</tr>`;
       }
       tb.innerHTML = html;
     }
 
-    window.setCellData = function(km, id, val) {
-      const key = `${km}_${id}`;
-      // Alternância do clique (toggle liga/desliga)
-      if(state.data[key] == val) delete state.data[key];
+    window.setCellData = function(km, sec, id, val) {
+      const key = `${km}_${sec}_${id}`;
+      if(id !== 'obs' && state.data[key] == val) delete state.data[key];
       else state.data[key] = val;
-      
-      saveState();
-      renderTable();
+      saveState(); renderTable();
     }
 
-    document.getElementById('btnExport').onclick = () => {
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.table_to_sheet(document.getElementById("mainTable"));
-      XLSX.utils.book_append_sheet(wb, ws, "Coleta");
-      XLSX.writeFile(wb, `Retigrafico_${state.rodoviaUF || 'SemNome'}.xlsx`);
+    // ------ FUNÇÕES DE SALVAMENTO E EXPORTAÇÃO ------
+    function getFormattedDate() {
+        const today = new Date();
+        return `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getFullYear()).slice(-2)}`;
+    }
+
+    function createOrUpdateIndex(name) {
+        if (!currentId) {
+            currentId = 'ret_' + Date.now();
+            history.replaceState(null, '', `?id=${currentId}`);
+        }
+        state.metadata.name = name;
+        saveState();
+
+        let list = JSON.parse(localStorage.getItem('retigrafico_index_v1') || '[]');
+        let item = list.find(x => x.id === currentId);
+        if(item) {
+            item.name = name; item.date = new Date().toISOString(); item.rodovia = state.rodoviaUF; item.kmStart = state.kmStart; item.kmEnd = state.kmEnd;
+        } else {
+            list.unshift({ id: currentId, name: name, date: new Date().toISOString(), rodovia: state.rodoviaUF, kmStart: state.kmStart, kmEnd: state.kmEnd });
+        }
+        localStorage.setItem('retigrafico_index_v1', JSON.stringify(list));
+
+        const t = new Date();
+        document.getElementById('saveConfirmText').innerText = `Salvo como "${name}" em ${getFormattedDate()} às ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+        return true;
+    }
+
+    document.getElementById('btnSaveFile').onclick = () => {
+        let def = state.metadata?.name || `Retigráfico - ${getFormattedDate()}`;
+        let name = prompt("Nome do arquivo:", def);
+        if(name) createOrUpdateIndex(name);
     };
+
+    document.getElementById('btnExport').onclick = () => {
+        if(!state.metadata?.name) {
+            let name = prompt("Defina um nome para o arquivo antes de baixar:", `Retigráfico - ${getFormattedDate()}`);
+            if(!name) return;
+            createOrUpdateIndex(name);
+        }
+        exportExcel();
+    };
+
+    function exportExcel() {
+        let wb = XLSX.utils.book_new();
+        let ws_data = [];
+        let activeCols = COLS.filter(c => c.act(state));
+
+        let headerRow = ["KM", "Seção"];
+        activeCols.forEach(c => headerRow.push(c.label));
+        headerRow.push("Obs");
+        ws_data.push(headerRow);
+
+        let start = parseInt(state.kmStart); let end = parseInt(state.kmEnd);
+        if(start > end) { let temp = start; start = end; end = temp; }
+
+        for(let km = start; km <= end; km++) {
+            state.selectedSecoes.forEach(sec => {
+                let row = [km, sec];
+                activeCols.forEach(c => {
+                    let val = state.data[`${km}_${sec}_${c.id}`] || '';
+                    if (!c.isInput && val) {
+                        let opt = c.opts(state).find(o => o.v == val);
+                        row.push(opt ? opt.l : val);
+                    } else row.push(val);
+                });
+                row.push(state.data[`${km}_${sec}_obs`] || '');
+                ws_data.push(row);
+            });
+        }
+
+        let ws = XLSX.utils.aoa_to_sheet(ws_data);
+        XLSX.utils.book_append_sheet(wb, ws, "Coleta");
+        XLSX.writeFile(wb, `${state.metadata.name}.xlsx`);
+    }
 
     initUI();
   </script>
