@@ -42,8 +42,12 @@
     th,td{border-bottom:1px solid #e2e8f0;padding:6px 8px;text-align:center;}
     th{background:#f1f5f9;font-size:12px;position:sticky;top:0;z-index:2;font-weight:700;text-transform:uppercase;color:#475569;}
     td:first-child{text-align:center;}
+    
+    /* Alteração para garantir que os inputs herdem bem a cor ou destaquem levemente */
+    input[type=number], input[type=text] { background: rgba(255, 255, 255, 0.8); }
+
     .chip{padding:4px 4px;border-radius:6px;border:1px solid #cbd5e1;background:#f1f5f9;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;min-width:30px;justify-content:center;margin:0 1px;transition:all 0.1s;}
-    .chip.active{transform:scale(1.1);border-width:2px;}
+    .chip.active{transform:scale(1.1);border-width:2px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
     .chip.ok.active{background:var(--ok);color:#fff;border-color:#558b2f;} 
     .chip.mid.active{background:var(--mid);color:#000;border-color:#fbc02d;}
     .chip.warn.active{background:var(--warn);color:#fff;border-color:#c2410c;}
@@ -277,11 +281,19 @@
       </tr>`;
 
       let html = '';
+      let kmCount = 0; // Contador para controlar o zebrado por bloco (KM)
+
       for(let km = start; km <= end; km++) {
+        // Alterna a cor do bloco entre branco e cinza claro
+        let rowBg = (kmCount % 2 === 0) ? '#ffffff' : '#f1f5f9';
+
         state.selectedSecoes.forEach((sec, idx) => {
-           html += `<tr>`;
-           if(idx === 0) html += `<td rowspan="${state.selectedSecoes.length}" style="background:var(--bg); border-right:1px solid #e2e8f0;"><b>${km}</b></td>`;
-           html += `<td style="font-weight:600; font-size:12px; color:var(--muted)">${sec}</td>`;
+           html += `<tr style="background-color: ${rowBg};">`;
+           
+           if(idx === 0) {
+              html += `<td rowspan="${state.selectedSecoes.length}" style="border-right:1px solid #e2e8f0; vertical-align:middle;"><b>${km}</b></td>`;
+           }
+           html += `<td style="font-weight:600; font-size:12px; color:var(--muted); vertical-align:middle;">${sec}</td>`;
            
            activeCols.forEach(c => {
               let val = state.data[`${km}_${sec}_${c.id}`] || '';
@@ -296,6 +308,8 @@
            html += `<td><input type="text" placeholder="..." value="${obsVal}" onchange="setCellData('${km}','${sec}','obs',this.value)" style="padding:8px; font-size:13px; width:100%;"></td>`;
            html += `</tr>`;
         });
+        
+        kmCount++;
       }
       tb.innerHTML = html;
     }
