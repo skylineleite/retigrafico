@@ -40,7 +40,6 @@
     .hidden{display:none;}
     
     .table-wrap{max-height:600px;overflow:auto;border-radius:12px;border:1px solid #e2e8f0;margin-top:12px;}
-    /* Tabela agora distribui melhor o espaço e permite quebras de linha naturais */
     table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;}
     th,td{border-bottom:1px solid #e2e8f0;padding:6px 8px;text-align:center; vertical-align:middle;}
     th{background:#e2e8f0;font-size:12px;position:sticky;top:0;z-index:2;font-weight:700;text-transform:uppercase;color:#334155;}
@@ -339,7 +338,7 @@
         if(name) createOrUpdateIndex(name);
     };
 
-    // ----- NOVA FUNÇÃO DE EXPORTAÇÃO COM EXCELJS -----
+    // ----- NOVA EXPORTAÇÃO EM BLOCOS (MATRIZ KMs NAS COLUNAS) -----
     document.getElementById('btnExport').onclick = async () => {
         if(!state.metadata?.name) {
             let name = prompt("Defina um nome para o arquivo antes de baixar:", `Retigráfico - ${getFormattedDate()}`);
@@ -355,105 +354,107 @@
         const wsBruto = workbook.addWorksheet('Coleta Bruta');
 
         let activeCols = COLS.filter(c => c.act(state));
-
-        // Montando o Cabeçalho
-        let headers = ["KM", "Seção"];
-        activeCols.forEach(c => headers.push(c.label));
-        headers.push("Observação");
-
-        wsVisual.addRow(headers);
-        wsBruto.addRow(headers);
-
-        // Estilo do Cabeçalho para ambas as abas
-        [wsVisual, wsBruto].forEach(ws => {
-            let row = ws.getRow(1);
-            row.height = 25;
-            row.eachCell(cell => {
-                cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-                cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            });
-        });
-
-        // Mapa de Cores correspondente ao CSS
-        const colorMap = {
-            'ok': 'FF8BC34A', // Verde
-            'mid': 'FFFFEB3B', // Amarelo
-            'warn': 'FFF97316', // Laranja
-            'bad': 'FFF44336', // Vermelho
-            'worse': 'FF9C27B0', // Roxo
-            'dead': 'FF212121', // Preto
-            'yes': 'FFF44336', // Vermelho
-            'no': 'FF8BC34A'  // Verde
-        };
-
-        let start = parseInt(state.kmStart); let end = parseInt(state.kmEnd);
+        
+        let start = parseInt(state.kmStart); 
+        let end = parseInt(state.kmEnd);
         if(start > end) { let temp = start; start = end; end = temp; }
 
-        for(let km = start; km <= end; km++) {
-            state.selectedSecoes.forEach(sec => {
-                let rowVisual = [km, sec];
-                let rowBruto = [km, sec];
+        let kms = [];
+        for(let km = start; km <= end; km++) kms.push(km);
 
-                activeCols.forEach(c => {
-                    let val = state.data[`${km}_${sec}_${c.id}`] || '';
-                    if (!c.isInput && val) {
-                        let opt = c.opts(state).find(o => o.v == val);
-                        rowBruto.push(opt ? opt.l : val);
-                        // Aba visual recebe o número/letra junto com a cor
-                        rowVisual.push({ val: opt ? opt.l : val, color: opt ? colorMap[opt.c] : null });
-                    } else {
-                        rowBruto.push(val);
-                        rowVisual.push({ val: val, color: null });
-                    }
-                });
-                
-                let obsVal = state.data[`${km}_${sec}_obs`] || '';
-                rowBruto.push(obsVal);
-                rowVisual.push({ val: obsVal, color: null });
+        const colorMap = {
+            'ok': 'FF8BC34A', 'mid': 'FFFFEB3B', 'warn': 'FFF97316', 
+            'bad': 'FFF44336', 'worse': 'FF9C27B0', 'dead': 'FF212121', 
+            'yes': 'FFF44336', 'no': 'FF8BC34A'
+        };
 
-                let excelRowBruto = wsBruto.addRow(rowBruto);
-                let excelRowVisual = wsVisual.addRow(rowVisual.map(x => typeof x === 'object' && x !== null ? x.val : x));
+        function buildSheet(ws, isVisual) {
+            let currentRow = 1;
 
-                // Aplicar estilo na Aba Visual
-                rowVisual.forEach((colData, index) => {
-                    let cell = excelRowVisual.getCell(index + 1);
-                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            // Prepara a lista de blocos que serão criados (Disciplinas ativas + Bloco de Observações)
+            let blocksToExport = [...activeCols, { id: 'obs', label: 'Observações', isInput: true }];
+
+            blocksToExport.forEach(disc => {
+                // Título do Bloco
+                let titleRow = ws.getRow(currentRow);
+                titleRow.getCell(1).value = disc.label.toUpperCase();
+                titleRow.getCell(1).font = { bold: true, size: 14 };
+                currentRow++;
+
+                // Cabeçalho (Seção / KM1 / KM2...)
+                let headerRow = ws.getRow(currentRow);
+                headerRow.getCell(1).value = "SEÇÃO \\ KM";
+                headerRow.getCell(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                headerRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+                headerRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+                headerRow.getCell(1).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+                kms.forEach((km, idx) => {
+                    let cell = headerRow.getCell(idx + 2);
+                    cell.value = km;
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
                     cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                });
+                currentRow++;
+
+                // Linhas de cada Seção
+                state.selectedSecoes.forEach(sec => {
+                    let row = ws.getRow(currentRow);
                     
-                    if (colData && colData.color) {
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colData.color } };
-                        // Contraste do texto dependendo da cor de fundo
-                        if (['FF9C27B0', 'FF212121', 'FFF44336'].includes(colData.color)) {
-                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
-                        } else if (colData.color === 'FFFFEB3B') {
-                            cell.font = { color: { argb: 'FF000000' }, bold: true };
+                    let secCell = row.getCell(1);
+                    secCell.value = sec;
+                    secCell.font = { bold: true };
+                    secCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    secCell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+                    kms.forEach((km, idx) => {
+                        let cell = row.getCell(idx + 2);
+                        let val = state.data[`${km}_${sec}_${disc.id}`] || '';
+                        
+                        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+                        if (disc.id === 'obs' || disc.isInput) {
+                            cell.value = val;
                         } else {
-                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                            let opt = val ? disc.opts(state).find(o => o.v == val) : null;
+                            let displayVal = opt ? opt.l : val;
+                            cell.value = displayVal;
+
+                            if (isVisual && opt && colorMap[opt.c]) {
+                                let bgColor = colorMap[opt.c];
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+                                
+                                if (['FF9C27B0', 'FF212121', 'FFF44336'].includes(bgColor)) {
+                                    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                                } else if (bgColor === 'FFFFEB3B') {
+                                    cell.font = { color: { argb: 'FF000000' }, bold: true };
+                                } else {
+                                    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                                }
+                            }
                         }
-                    }
+                    });
+                    currentRow++;
                 });
 
-                // Aplicar estilo na Aba Bruta
-                excelRowBruto.eachCell(cell => {
-                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-                });
+                // Pula uma linha em branco para separar do próximo bloco
+                currentRow++;
             });
+
+            // Ajuste automático de largura das colunas
+            ws.getColumn(1).width = 15; // Coluna das Seções
+            kms.forEach((km, idx) => {
+                ws.getColumn(idx + 2).width = 12; // Colunas dos KMs
+            });
+            // O bloco de observações vai ser mais longo, então deixamos o wrapText ativado
         }
 
-        // Definindo as larguras exatas de cada coluna para ficar bem distribuído no Excel
-        [wsVisual, wsBruto].forEach(ws => {
-            ws.columns.forEach((column, i) => {
-                if (i === 0) column.width = 10; // KM
-                else if (i === 1) column.width = 12; // Seção
-                else if (i === ws.columns.length - 1) column.width = 45; // Obs (Mais larga)
-                else column.width = 18; // Disciplinas
-            });
-        });
+        buildSheet(wsVisual, true);
+        buildSheet(wsBruto, false);
 
-        // Geração do Arquivo
         const buffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([buffer]), `${state.metadata.name}.xlsx`);
     }
