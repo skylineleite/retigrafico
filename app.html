@@ -46,4 +46,419 @@
     th{background:#e2e8f0;font-size:12px;position:sticky;top:0;z-index:2;font-weight:700;text-transform:uppercase;color:#334155;}
     td:first-child{text-align:center;}
     .chip{padding:4px 4px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;min-width:30px;justify-content:center;margin:2px 1px;transition:all 0.1s;}
-    .chip
+    .chip.active{transform:scale(1.1);border-width:2px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+    .chip.ok.active{background:var(--ok);color:#fff;border-color:#558b2f;} 
+    .chip.mid.active{background:var(--mid);color:#000;border-color:#fbc02d;}
+    .chip.warn.active{background:var(--warn);color:#fff;border-color:#c2410c;}
+    .chip.bad.active{background:var(--bad);color:#fff;border-color:#c62828;} 
+    .chip.worse.active{background:var(--worse);color:#fff;border-color:#7B1FA2;}
+    .chip.dead.active{background:var(--dead);color:#fff;border-color:#000;} 
+    .chip.yes.active{background:var(--yes);color:#fff;border-color:#b71c1c;}
+    .chip.no.active{background:var(--no);color:#fff;border-color:#33691e;}
+    @media (max-width:768px){ .g-3{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <button class="btn-back" onclick="window.location.href='index.html'"><span>&#8592;</span> Voltar</button>
+      <img src="app-logo.png" alt="Logo" style="width:36px;height:36px;border-radius:8px">
+      <div style="flex:1;overflow:hidden">
+        <h1 style="font-size:18px;margin:0">Retigráfico</h1>
+        <div style="font-size:12px;color:var(--muted)" id="saveStatus">Status: Sincronizado</div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:12px">1. Parâmetros & Escopo</div>
+      <div class="grid g-3">
+        <div><label>Rodovia / UF</label><input id="rodoviaUF" type="text" placeholder="Ex.: BR-040 / MG"></div>
+        <div><label>KM Inicial</label><input id="kmStart" type="number"></div>
+        <div><label>KM Final</label><input id="kmEnd" type="number"></div>
+      </div>
+      
+      <div style="margin-top:16px">
+        <label style="font-weight:600; color:var(--ink); font-size:14px;">Selecione as Pistas (Mínimo 1)</label>
+        <div class="row" id="pistasWrap" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="params-box">
+        <div class="check-list" id="checkList">
+          <div style="margin-bottom:6px">
+            <span style="font-weight:600; font-size:14px; color:var(--ink);">1. Vegetação</span>
+            <div style="margin-left:24px; margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+               <label class="check-row"><input type="radio" name="rocada" id="r_rocada3"> Simples - 1 a 3</label>
+               <label class="check-row"><input type="radio" name="rocada" id="r_rocada5"> Detalhado - 1 a 5</label>
+               <label class="check-row"><input type="radio" name="rocada" id="r_rocada0"> Nenhuma</label>
+            </div>
+          </div>
+          
+          <label class="check-row"><input type="checkbox" id="c_drenagem"> 2. Drenagens (1 a 4)</label>
+          <label class="check-row"><input type="checkbox" id="c_capina"> 3. Capina e Refilamento (1 a 4)</label>
+          <label class="check-row"><input type="checkbox" id="c_cata"> 4. Cata-Cata (Lixo)</label>
+          <label class="check-row"><input type="checkbox" id="c_poda"> 5. Poda</label>
+          <label class="check-row"><input type="checkbox" id="c_entulho"> 6. Recolhimento de Entulho</label>
+          <label class="check-row"><input type="checkbox" id="c_defensa"> 7. Defensas Danificadas</label>
+          <label class="check-row"><input type="checkbox" id="c_dispositivo"> 8. Dispositivos Danificados</label>
+          <label class="check-row"><input type="checkbox" id="c_metragem"> 9. Metragem por Km</label>
+        </div>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button id="btnGerar">Gerar Tabela</button>
+        <button id="btnReset" class="ghost warn">Limpar Coleta</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:12px">2. Coleta de Campo</div>
+      <div class="table-wrap">
+        <table id="mainTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:flex-end; margin-bottom: 4px;">
+        <button id="btnSaveFile" class="ghost" style="border-color:#25D366; color:#166534; background:#dcfce7;">💾 Salvar Arquivo</button>
+        <button id="btnExport" class="ghost" style="background:#fff; color:var(--brand); border-color:var(--brand);">Baixar Relatório (XLSX)</button>
+      </div>
+      <div id="saveConfirmText" style="text-align:right; font-size:12px; font-weight:600; color:var(--muted); margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div id="resetModal" class="modal-back hidden">
+    <div class="modal-card">
+      <h3>⚠️ Limpar dados da coleta?</h3>
+      <p style="font-size:13px; color:var(--muted)">Isso apagará apenas os registros de campo. O escopo e KMs serão mantidos.</p>
+      <div style="display:flex;flex-direction:column;gap:10px; margin-top:16px">
+        <button id="btnConfirmReset" class="danger">Limpar Tudo</button>
+        <button onclick="document.getElementById('resetModal').classList.add('hidden')" class="ghost">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PISTAS_ORDER = ["Norte", "C.C", "Sul", "Leste", "Oeste"];
+
+    const O_VEG_3 = [{v:1,l:'1',c:'ok'},{v:2,l:'2',c:'mid'},{v:3,l:'3',c:'bad'}];
+    const O_VEG_5 = [{v:1,l:'1',c:'ok'},{v:2,l:'2',c:'mid'},{v:3,l:'3',c:'warn'},{v:4,l:'4',c:'bad'},{v:5,l:'5',c:'worse'}];
+    const O_LIMP = [{v:1,l:'Bom',c:'ok'},{v:2,l:'Reg',c:'mid'},{v:3,l:'Rui',c:'bad'},{v:4,l:'Cri',c:'worse'}]; 
+    const O_YN= [{v:'S',l:'Sim',c:'yes'},{v:'N',l:'Não',c:'no'}];
+
+    const COLS = [
+      {id:'rocada', label:'Vegetação', opts: s => s.config.rocada === '1-5' ? O_VEG_5 : O_VEG_3, act: s => s.config.rocada !== 'none'},
+      {id:'drenagem', label:'Drenagem', opts: () => O_LIMP, act: s => s.config.drenagem},
+      {id:'capina', label:'Capina', opts: () => O_LIMP, act: s => s.config.capina},
+      {id:'cata', label:'Cata-Cata', opts: () => O_YN, act: s => s.config.cata},
+      {id:'poda', label:'Poda', opts: () => O_YN, act: s => s.config.poda},
+      {id:'entulho', label:'Entulho', opts: () => O_YN, act: s => s.config.entulho},
+      {id:'defensa', label:'Defensa', opts: () => O_YN, act: s => s.config.defensa},
+      {id:'dispositivo', label:'Dispositivo', opts: () => O_YN, act: s => s.config.dispositivo},
+      {id:'metragem', label:'Metragem', isInput: true, act: s => s.config.metragem}
+    ];
+
+    let currentId = new URLSearchParams(window.location.search).get('id');
+    const isNew = new URLSearchParams(window.location.search).get('new');
+    
+    let state = {
+      kmStart:'', kmEnd:'', rodoviaUF:'', data:{}, metadata:{},
+      selectedSecoes: ["Norte", "C.C", "Sul"],
+      config:{rocada:'none', drenagem:false, capina:false, cata:false, poda:false, entulho:false, defensa:false, dispositivo:false, metragem:false}
+    };
+
+    if(isNew) {
+      localStorage.removeItem('ret_temp_autosave');
+      currentId = null;
+    } else {
+      let saved = localStorage.getItem(currentId || 'ret_temp_autosave');
+      if(saved) state = Object.assign(state, JSON.parse(saved));
+    }
+
+    function saveState() {
+      state.rodoviaUF = document.getElementById('rodoviaUF').value;
+      state.kmStart = document.getElementById('kmStart').value;
+      state.kmEnd = document.getElementById('kmEnd').value;
+      localStorage.setItem(currentId || 'ret_temp_autosave', JSON.stringify(state));
+      
+      if(currentId && state.metadata && state.metadata.name) {
+          let list = JSON.parse(localStorage.getItem('retigrafico_index_v1') || '[]');
+          let item = list.find(x => x.id === currentId);
+          if(item) {
+              item.rodovia = state.rodoviaUF; item.kmStart = state.kmStart; item.kmEnd = state.kmEnd;
+              localStorage.setItem('retigrafico_index_v1', JSON.stringify(list));
+          }
+      }
+      document.getElementById('saveStatus').innerText = 'Sincronizado às ' + new Date().toLocaleTimeString().slice(0,5);
+    }
+    
+    window.addEventListener('beforeunload', saveState);
+
+    function initUI() {
+      document.getElementById('rodoviaUF').value = state.rodoviaUF;
+      document.getElementById('kmStart').value = state.kmStart;
+      document.getElementById('kmEnd').value = state.kmEnd;
+      
+      if(state.config.rocada === '1-3') document.getElementById('r_rocada3').checked = true;
+      else if(state.config.rocada === '1-5') document.getElementById('r_rocada5').checked = true;
+      else document.getElementById('r_rocada0').checked = true;
+      
+      ['drenagem','capina','cata','poda','entulho','defensa','dispositivo','metragem'].forEach(k => {
+        document.getElementById('c_'+k).checked = state.config[k];
+      });
+
+      const pWrap = document.getElementById('pistasWrap');
+      PISTAS_ORDER.forEach(p => {
+          const lbl = document.createElement('label');
+          lbl.className = 'check-row'; lbl.style.background = '#fff'; lbl.style.padding = '6px 12px'; lbl.style.borderRadius = '8px'; lbl.style.border = '1px solid #cbd5e1';
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = p;
+          cb.checked = state.selectedSecoes.includes(p);
+          cb.onchange = (e) => {
+              if(!e.target.checked && state.selectedSecoes.length === 1) {
+                  e.target.checked = true; alert("É obrigatório manter pelo menos uma pista selecionada."); return;
+              }
+              if(e.target.checked) state.selectedSecoes.push(p);
+              else state.selectedSecoes = state.selectedSecoes.filter(x => x !== p);
+              state.selectedSecoes.sort((a,b) => PISTAS_ORDER.indexOf(a) - PISTAS_ORDER.indexOf(b));
+              saveState(); renderTable();
+          }
+          lbl.appendChild(cb); lbl.appendChild(document.createTextNode(' ' + p)); pWrap.appendChild(lbl);
+      });
+
+      renderTable();
+    }
+
+    document.querySelectorAll('input[name="rocada"]').forEach(r => {
+        r.addEventListener('change', e => {
+            if(e.target.id === 'r_rocada3') state.config.rocada = '1-3';
+            else if(e.target.id === 'r_rocada5') state.config.rocada = '1-5';
+            else state.config.rocada = 'none';
+            saveState(); renderTable();
+        });
+    });
+
+    document.querySelectorAll('#checkList input[type="checkbox"]').forEach(c => {
+       c.addEventListener('change', e => {
+          const id = e.target.id.replace('c_','');
+          state.config[id] = e.target.checked;
+          saveState(); renderTable();
+       });
+    });
+
+    document.getElementById('btnGerar').onclick = () => { saveState(); renderTable(); };
+    document.getElementById('btnReset').onclick = () => document.getElementById('resetModal').classList.remove('hidden');
+    document.getElementById('btnConfirmReset').onclick = () => {
+      state.data = {}; saveState(); renderTable(); document.getElementById('resetModal').classList.add('hidden');
+    };
+
+    function renderTable() {
+      const th = document.getElementById('tableHead');
+      const tb = document.getElementById('tbody');
+      
+      let start = parseInt(state.kmStart); let end = parseInt(state.kmEnd);
+      if(isNaN(start) || isNaN(end)) {
+        th.innerHTML = ''; tb.innerHTML = '<tr><td style="color:var(--muted); padding:20px;">Preencha os KMs e as disciplinas e clique em Gerar Tabela.</td></tr>'; return;
+      }
+      if(start > end) { let temp = start; start = end; end = temp; }
+
+      let activeCols = COLS.filter(c => c.act(state));
+      th.innerHTML = `<tr>
+        <th style="width:50px">KM</th>
+        <th style="width:60px">Seção</th>
+        ${activeCols.map(c => `<th>${c.label}</th>`).join('')}
+        <th>Obs</th>
+      </tr>`;
+
+      let html = '';
+      let isEven = true;
+
+      for(let km = start; km <= end; km++) {
+        let rowBg = isEven ? 'background:#ffffff;' : 'background:#f1f5f9;';
+        isEven = !isEven;
+
+        state.selectedSecoes.forEach((sec, idx) => {
+           html += `<tr style="${rowBg}">`;
+           if(idx === 0) html += `<td rowspan="${state.selectedSecoes.length}" style="${rowBg} border-right:1px solid #e2e8f0;"><b>${km}</b></td>`;
+           html += `<td style="font-weight:600; font-size:12px; color:var(--muted)">${sec}</td>`;
+           
+           activeCols.forEach(c => {
+              let val = state.data[`${km}_${sec}_${c.id}`] || '';
+              if(c.isInput) {
+                html += `<td><input type="number" value="${val}" onchange="setCellData('${km}','${sec}','${c.id}',this.value)" style="width:70px;padding:6px;text-align:center;"></td>`;
+              } else {
+                html += `<td><div style="display:flex; flex-wrap:wrap; gap:2px; justify-content:center;">${c.opts(state).map(o => `<div class="chip ${o.c} ${val == o.v ? 'active' : ''}" onclick="setCellData('${km}','${sec}','${c.id}','${o.v}')">${o.l}</div>`).join('')}</div></td>`;
+              }
+           });
+           
+           let obsVal = state.data[`${km}_${sec}_obs`] || '';
+           html += `<td><textarea placeholder="..." onchange="setCellData('${km}','${sec}','obs',this.value)" style="padding:6px 8px; font-size:13px; width:100%; min-width:180px; height:46px; resize:vertical; background:transparent; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;">${obsVal}</textarea></td>`;
+           html += `</tr>`;
+        });
+      }
+      tb.innerHTML = html;
+    }
+
+    window.setCellData = function(km, sec, id, val) {
+      const key = `${km}_${sec}_${id}`;
+      if(id !== 'obs' && state.data[key] == val) delete state.data[key];
+      else state.data[key] = val;
+      saveState(); renderTable();
+    }
+
+    function getFormattedDate() {
+        const today = new Date();
+        return `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getFullYear()).slice(-2)}`;
+    }
+
+    function createOrUpdateIndex(name) {
+        if (!currentId) {
+            currentId = 'ret_' + Date.now();
+            history.replaceState(null, '', `?id=${currentId}`);
+        }
+        state.metadata.name = name;
+        saveState();
+
+        let list = JSON.parse(localStorage.getItem('retigrafico_index_v1') || '[]');
+        let item = list.find(x => x.id === currentId);
+        if(item) {
+            item.name = name; item.date = new Date().toISOString(); item.rodovia = state.rodoviaUF; item.kmStart = state.kmStart; item.kmEnd = state.kmEnd;
+        } else {
+            list.unshift({ id: currentId, name: name, date: new Date().toISOString(), rodovia: state.rodoviaUF, kmStart: state.kmStart, kmEnd: state.kmEnd });
+        }
+        localStorage.setItem('retigrafico_index_v1', JSON.stringify(list));
+
+        const t = new Date();
+        document.getElementById('saveConfirmText').innerText = `Salvo como "${name}" em ${getFormattedDate()} às ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+        return true;
+    }
+
+    document.getElementById('btnSaveFile').onclick = () => {
+        let def = state.metadata?.name || `Retigráfico - ${getFormattedDate()}`;
+        let name = prompt("Nome do arquivo:", def);
+        if(name) createOrUpdateIndex(name);
+    };
+
+    // ----- NOVA FUNÇÃO DE EXPORTAÇÃO COM EXCELJS -----
+    document.getElementById('btnExport').onclick = async () => {
+        if(!state.metadata?.name) {
+            let name = prompt("Defina um nome para o arquivo antes de baixar:", `Retigráfico - ${getFormattedDate()}`);
+            if(!name) return;
+            createOrUpdateIndex(name);
+        }
+        await exportExcelJS();
+    };
+
+    async function exportExcelJS() {
+        const workbook = new ExcelJS.Workbook();
+        const wsVisual = workbook.addWorksheet('Retigráfico');
+        const wsBruto = workbook.addWorksheet('Coleta Bruta');
+
+        let activeCols = COLS.filter(c => c.act(state));
+
+        // Montando o Cabeçalho
+        let headers = ["KM", "Seção"];
+        activeCols.forEach(c => headers.push(c.label));
+        headers.push("Observação");
+
+        wsVisual.addRow(headers);
+        wsBruto.addRow(headers);
+
+        // Estilo do Cabeçalho para ambas as abas
+        [wsVisual, wsBruto].forEach(ws => {
+            let row = ws.getRow(1);
+            row.height = 25;
+            row.eachCell(cell => {
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+        });
+
+        // Mapa de Cores correspondente ao CSS
+        const colorMap = {
+            'ok': 'FF8BC34A', // Verde
+            'mid': 'FFFFEB3B', // Amarelo
+            'warn': 'FFF97316', // Laranja
+            'bad': 'FFF44336', // Vermelho
+            'worse': 'FF9C27B0', // Roxo
+            'dead': 'FF212121', // Preto
+            'yes': 'FFF44336', // Vermelho
+            'no': 'FF8BC34A'  // Verde
+        };
+
+        let start = parseInt(state.kmStart); let end = parseInt(state.kmEnd);
+        if(start > end) { let temp = start; start = end; end = temp; }
+
+        for(let km = start; km <= end; km++) {
+            state.selectedSecoes.forEach(sec => {
+                let rowVisual = [km, sec];
+                let rowBruto = [km, sec];
+
+                activeCols.forEach(c => {
+                    let val = state.data[`${km}_${sec}_${c.id}`] || '';
+                    if (!c.isInput && val) {
+                        let opt = c.opts(state).find(o => o.v == val);
+                        rowBruto.push(opt ? opt.l : val);
+                        // Aba visual recebe o número/letra junto com a cor
+                        rowVisual.push({ val: opt ? opt.l : val, color: opt ? colorMap[opt.c] : null });
+                    } else {
+                        rowBruto.push(val);
+                        rowVisual.push({ val: val, color: null });
+                    }
+                });
+                
+                let obsVal = state.data[`${km}_${sec}_obs`] || '';
+                rowBruto.push(obsVal);
+                rowVisual.push({ val: obsVal, color: null });
+
+                let excelRowBruto = wsBruto.addRow(rowBruto);
+                let excelRowVisual = wsVisual.addRow(rowVisual.map(x => typeof x === 'object' && x !== null ? x.val : x));
+
+                // Aplicar estilo na Aba Visual
+                rowVisual.forEach((colData, index) => {
+                    let cell = excelRowVisual.getCell(index + 1);
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                    
+                    if (colData && colData.color) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colData.color } };
+                        // Contraste do texto dependendo da cor de fundo
+                        if (['FF9C27B0', 'FF212121', 'FFF44336'].includes(colData.color)) {
+                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                        } else if (colData.color === 'FFFFEB3B') {
+                            cell.font = { color: { argb: 'FF000000' }, bold: true };
+                        } else {
+                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                        }
+                    }
+                });
+
+                // Aplicar estilo na Aba Bruta
+                excelRowBruto.eachCell(cell => {
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                });
+            });
+        }
+
+        // Definindo as larguras exatas de cada coluna para ficar bem distribuído no Excel
+        [wsVisual, wsBruto].forEach(ws => {
+            ws.columns.forEach((column, i) => {
+                if (i === 0) column.width = 10; // KM
+                else if (i === 1) column.width = 12; // Seção
+                else if (i === ws.columns.length - 1) column.width = 45; // Obs (Mais larga)
+                else column.width = 18; // Disciplinas
+            });
+        });
+
+        // Geração do Arquivo
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), `${state.metadata.name}.xlsx`);
+    }
+
+    initUI();
+  </script>
+</body>
+</html>
